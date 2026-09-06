@@ -132,6 +132,47 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .tag-soon{display:inline-block;background:rgba(201,133,0,.14);color:#e8b45c;border:1px dashed rgba(201,133,0,.45);
   font-size:10px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:6px}
 
+/* ---------- campanhas ---------- */
+.camp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:1080px){.camp-grid{grid-template-columns:1fr}}
+.camp{background:var(--surface);border:1px solid var(--ring);border-radius:15px;padding:16px 18px;overflow:hidden}
+.camp .ch{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.camp .ch h3{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:-.2px}
+.camp .ch .acct{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.camp .obj{font-size:11.5px;color:var(--muted);margin-top:4px}
+.camp .obj b{color:var(--ink-2);font-weight:600}
+.camp .pub{font-size:11px;color:var(--muted);margin-top:2px}
+.camp .kpis{display:flex;gap:8px;flex-wrap:wrap;margin:11px 0 4px}
+.camp .kp{background:var(--surface-2);border-radius:9px;padding:6px 11px;font-size:10.5px;color:var(--muted)}
+.camp .kp b{display:block;font-family:var(--disp);font-size:15px;font-weight:700;color:var(--ink);margin-top:1px}
+.camp .kp.ok b{color:var(--green)} .camp .kp.mid b{color:var(--amber)} .camp .kp.bad b{color:var(--red)}
+.dotst{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:1px}
+.dotst.off{background:var(--muted)}
+.tbl-wrap{overflow-x:auto;margin-top:10px}
+.camp table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:520px}
+.camp th{text-align:right;color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:4px 6px;border-bottom:1px solid var(--grid);white-space:nowrap}
+.camp th:first-child{text-align:left}
+.camp td{padding:6px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+.camp td:first-child{text-align:left;color:var(--ink);max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.camp tr:last-child td{border-bottom:0}
+.camp .adname small{display:block;color:var(--muted);font-size:9.5px}
+.bdg{font-size:10px;padding:1px 6px;border-radius:6px;font-weight:700;white-space:nowrap}
+.bdg.win{background:rgba(217,165,63,.16);color:var(--gold)}
+.bdg.lose{background:rgba(213,84,78,.15);color:#ff9d97}
+.bdg.col{background:rgba(255,255,255,.06);color:var(--muted);font-weight:600}
+.pos-funil{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);font-size:11.5px;color:var(--muted)}
+.pos-funil .stp{background:var(--surface-2);border-radius:8px;padding:5px 10px;color:var(--ink-2)}
+.pos-funil .stp b{color:var(--ink);font-variant-numeric:tabular-nums}
+.pos-funil .arr{color:var(--muted)}
+.abx{margin-top:11px;padding:10px 12px;border:1px dashed rgba(57,135,229,.45);background:rgba(57,135,229,.06);border-radius:10px}
+.abx .abt{font-size:10.5px;font-weight:700;color:#7db2f0;letter-spacing:.05em;text-transform:uppercase}
+.abx .abrow{display:flex;gap:14px;flex-wrap:wrap;margin-top:7px;font-size:12px;color:var(--ink-2)}
+.abx .abrow b{color:var(--ink);font-variant-numeric:tabular-nums}
+.abx .abwarn{font-size:10.5px;color:var(--muted);margin-top:6px}
+.camp-aviso{margin-bottom:12px;padding:10px 14px;border-left:3px solid var(--amber);background:rgba(201,133,0,.07);border-radius:0 10px 10px 0;font-size:12px;color:var(--ink-2)}
+.camp-aviso b{color:#e8b45c}
+.camp-err{padding:14px;border-radius:12px;background:var(--surface-2);color:var(--muted);font-size:12.5px}
+
 /* ---------- calendário ---------- */
 .cal{display:flex;flex-direction:column}
 .ci{display:grid;grid-template-columns:96px 14px 1fr auto;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
@@ -240,6 +281,18 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
   </div>
 </div>
 
+<!-- ============ 2b · CAMPANHAS ============ -->
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>Campanhas · análise por anúncio</h2>
+      <div class="hint">Graph API Meta (janela 7d p/ criativo, mês p/ CPL·CPA) cruzada com formulários do blindado e vendas Hubla por UTM · badge 🏆/🔻 só com gasto ≥ R$ 50 nos 7 dias</div>
+    </div>
+  </div>
+  <div id="camp-aviso"></div>
+  <div class="camp-grid" id="campanhas"></div>
+  <div class="note">Hook = vídeo 3s ÷ impressões · Hold = ThruPlay ÷ 3s · "7d" da Meta pode incluir o fim de agosto. Vendas = faturas pagas na Hubla com o id da campanha na UTM (setembro). Blindado sem venda ainda = CPA "—", não zero.</div>
+</div>
+
 <!-- ============ 3 · FUNIL FASE 1 ============ -->
 <div class="grid g-fun">
   <div class="card fcard" id="funil-tjam"></div>
@@ -300,6 +353,35 @@ function classificar(nome){
   if (/TJ[\s_-]?AM|TJAM|TRIBUNA/.test(n)) return "tjam";
   return "outras";
 }
+// Identidade das campanhas do plano (resumo dos _CAMPANHA.md — editar aqui quando nascer campanha nova)
+// tipo: "blindado" (CPA por venda Hubla + funil pós-clique) · "lead" (CPL pixel) · "purchase" (CPA pixel)
+const CAMP_INFO = [
+  {id:"52664037551228",     t:"TJ-AM · Blindado",             conta:"TRIBUNAIS", tipo:"blindado", faixa:{ok:150,stop:350}, diaria:120,
+   obj:"Venda direta blindada — teste A/B site × WhatsApp Anne", pub:"Morno-quente · ABO R$ 60+60 · substituiu o perpétuo do gestor",
+   ab:{a:"site-blindado", b:"whatsapp-anne", fim:"12/09"}},
+  {id:"120256238530960492", t:"SEDUC-AM · Blindado",          conta:"ON-LINE",   tipo:"blindado", faixa:{ok:110,stop:250}, diaria:120,
+   obj:"Venda direta blindada", pub:"Morno-quente · VD02 aniversário (CPA hist. R$ 58) + AD03 estático"},
+  {id:"120256238532240492", t:"SEMSA · Blindado",             conta:"ON-LINE",   tipo:"blindado", faixa:{ok:110,stop:250}, diaria:120,
+   obj:"Venda direta blindada", pub:"Morno-quente · concurso planejado p/ 2027 — copy nunca diz iminente"},
+  {id:"52663791462228",     t:"TJ-AM · Webinário (cadastro)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:5,stop:8}, diaria:380,
+   obj:"Captação de cadastro p/ o webinário", pub:"[QUENTE] envolvimento AM + [FRIO] Advantage+ seed LAL1% alunos"},
+  {id:"52663860728228",     t:"SEDUC-PA · Webinário (cadastro)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:4.5,stop:6.5}, diaria:180,
+   obj:"Captação de cadastro p/ o webinário", pub:"[QUENTE] seguidores+pixel PA + [FRIO] SEDUC ADV+"},
+  {id:"120256186603360492", t:"PRF · PV07 (ingresso 19,90)",  conta:"ON-LINE",   tipo:"purchase", faixa:{ok:55,stop:75}, diaria:null,
+   obj:"Venda do ingresso — custo/ingresso ≤ 55", pub:"Advantage+ +30 Brasil · otimiza VALUE · transição p/ [PLANO][QUIZ][PRF] (VSL 08/09)"},
+  {id:"120256234659840492", t:"PRF · PV11 (ingresso 19,90)",  conta:"ON-LINE",   tipo:"purchase", faixa:{ok:55,stop:75}, diaria:null,
+   obj:"Venda do ingresso — teste de página", pub:"Advantage+ +30 Brasil · otimiza VALUE · transição p/ [PLANO][QUIZ][PRF]"},
+  {id:"120248542127820307", t:"Play Passei · frio LAL",       conta:"SPOTFABIO", tipo:"purchase", faixa:{ok:200,stop:300}, diaria:null,
+   obj:"Venda direta VSL R$ 297", pub:"Frio · LAL lista de clientes · em transição p/ estrutura do plano"},
+  {id:"120248254735440307", t:"Play Passei · VD01 PRF",       conta:"SPOTFABIO", tipo:"purchase", faixa:{ok:200,stop:300}, diaria:null,
+   obj:"Venda direta VSL R$ 297", pub:"Advantage+ +25 Brasil · em transição p/ estrutura do plano"},
+  {id:"120241374284320307", t:"Play Passei · VSL 23/03",      conta:"SPOTFABIO", tipo:"purchase", faixa:{ok:200,stop:300}, diaria:null,
+   obj:"Venda direta VSL R$ 297", pub:"Advantage+ +25 Brasil · em transição p/ estrutura do plano"},
+  {id:"120241274472180307", t:"Play Passei · VSL 21/03",      conta:"SPOTFABIO", tipo:"purchase", faixa:{ok:200,stop:300}, diaria:null,
+   obj:"Venda direta VSL R$ 297", pub:"Advantage+ +25 Brasil · em transição p/ estrutura do plano"},
+];
+const BADGE_MIN_7D = 50; // regra dura: badge 🏆/🔻 só com gasto ≥ R$ 50 na janela de 7 dias
+
 // CPL faixas escalar/parar (janela 3–7d) — CPL medível hoje só p/ webinários instrumentados
 const CPL_FAIXA = { tjam:{ok:5,stop:8}, seducpa:{ok:4.5,stop:6.5} };
 // Metas Fase 1 (encadeadas): sala/inscritos · pitch/sala · checkout/pitch · compra/checkout
@@ -422,6 +504,7 @@ function renderAll(){
   renderRail(); renderCal();
   renderTermometro();
   renderVerba();
+  renderCampanhas();
   renderFunis();
   renderAlertas();
 }
@@ -546,6 +629,121 @@ function funilCard(elId, code, fid, nome){
 function renderFunis(){
   funilCard("funil-tjam", "TJAM", "tjam", "TJ-AM · Webinário");
   funilCard("funil-seducpa", "SEDUC_PA", "seducpa", "SEDUC-PA · Webinário");
+}
+
+/* ---- 2b · campanhas ---- */
+function convDoAd(ad, tipo, win){          // conversão-chave por frente
+  if (tipo === "lead") return ad[win].px_lead;
+  if (tipo === "purchase") return ad[win].px_purchase;
+  return win === "mes" ? ad.vendas_mes : ad.j7.px_purchase; // blindado: venda Hubla no mês; 7d cai no pixel
+}
+function faixaCls(v, fx){ return v==null||!fx ? "" : v <= fx.ok ? "ok" : v <= fx.stop ? "mid" : "bad"; }
+function fmtCusto(v){ return v==null ? "—" : "R$ " + v.toLocaleString("pt-BR",{maximumFractionDigits:2}); }
+
+function renderCampanhas(){
+  const C = RAW.campanhas;
+  const box = $("campanhas"), aviso = $("camp-aviso");
+  if (!C || !C.ok){
+    box.innerHTML = `<div class="camp-err" style="grid-column:1/-1">Bloco de campanhas sem dados no momento${C&&C.error?` — ${esc(C.error)}`:""}. O resto do painel segue normal.</div>`;
+    aviso.innerHTML = "";
+    return;
+  }
+  // Aviso da auditoria de pixel (06/09) — atualizar quando a auditoria for refeita
+  aviso.innerHTML = `<div class="camp-aviso"><b>Auditoria de pixel 06/09:</b> Purchase chega via pay.hub.la nos 3 pixels, mas com volume magro —
+    TJ-AM ~37/semana e SEMED-SEDUC ~53/semana. Os blindados otimizam por Purchase com pouco sinal por conjunto:
+    julgamento de CPA só com a janela de 7 dias cheia. PRF e Play Passei otimizam em pixels próprios (fora desta auditoria).</div>`;
+
+  const byId = {}; for (const it of C.items) byId[it.id] = it;
+  let h = "";
+  for (const info of CAMP_INFO){
+    const c = byId[info.id];
+    if (!c) continue;
+    const ativo = c.status === "ACTIVE";
+    const tot7 = {spend:0, conv:0}, totM = {spend:0, ilc:0, conv:0};
+    for (const ad of c.ads){
+      tot7.spend += ad.j7.spend; tot7.conv += convDoAd(ad, info.tipo, "j7");
+      totM.spend += ad.mes.spend; totM.ilc += ad.mes.ilc; totM.conv += convDoAd(ad, info.tipo, "mes");
+    }
+    const cap = info.diaria ?? c.orcamento_dia;
+    const kpiMes = totM.conv > 0 ? totM.spend / totM.conv : null;
+    const kpiLbl = info.tipo === "lead" ? "CPL mês" : info.tipo === "blindado" ? "CPA/venda mês" : "CPA mês";
+    const kcls = faixaCls(kpiMes, info.faixa);
+
+    // ranking p/ badge — REGRA DURA: só anúncios com gasto ≥ R$ 50 nos 7d
+    const eleg = c.ads.filter(a => a.j7.spend >= BADGE_MIN_7D);
+    const score = a => { const cv = convDoAd(a, info.tipo, "j7"); return cv > 0 ? cv / a.j7.spend * 1000 : Number(a.j7.ctr)/100; };
+    let best = null, worst = null;
+    if (eleg.length >= 2){
+      const ord = [...eleg].sort((a,b) => score(b) - score(a));
+      best = ord[0].id; worst = ord[ord.length-1].id;
+      if (best === worst) worst = null;
+    }
+
+    let rows = "";
+    for (const ad of [...c.ads].sort((a,b)=>b.j7.spend - a.j7.spend)){
+      const hook = ad.j7.imp > 0 ? ad.j7.v3s / ad.j7.imp : null;
+      const hold = ad.j7.v3s > 0 ? ad.j7.thru / ad.j7.v3s : null;
+      const cv7 = convDoAd(ad, info.tipo, "j7");
+      const custo7 = cv7 > 0 ? ad.j7.spend / cv7 : null;
+      const badge = ad.j7.spend < BADGE_MIN_7D ? `<span class="bdg col">coletando dados</span>`
+        : ad.id === best ? `<span class="bdg win">🏆 campeão</span>`
+        : ad.id === worst ? `<span class="bdg lose">🔻 pior</span>` : "";
+      rows += `<tr><td class="adname">${esc(ad.nome)}<small>${esc(ad.adset||"")}</small></td>
+        <td>${fmtR2(ad.j7.spend)}</td>
+        <td>${Number(ad.j7.ctr).toLocaleString("pt-BR",{maximumFractionDigits:2})}%</td>
+        <td>${hook==null?"—":Math.round(hook*100)+"%"}</td>
+        <td>${hold==null?"—":Math.round(hold*100)+"%"}</td>
+        <td class="pc ${faixaCls(custo7, info.faixa)}">${fmtCusto(custo7)}</td>
+        <td>${info.tipo==="blindado" ? ad.vendas_mes : convDoAd(ad, info.tipo, "mes").toLocaleString("pt-BR")}</td>
+        <td>${badge}</td></tr>`;
+    }
+
+    // linha do funil pós-clique (só blindado): cliques → formulários → vendas (mês)
+    let funilPos = "";
+    if (info.tipo === "blindado"){
+      const txForm = totM.ilc > 0 ? c.forms_mes / totM.ilc : null;
+      funilPos = `<div class="pos-funil">Pós-clique (mês):
+        <span class="stp"><b>${totM.ilc.toLocaleString("pt-BR")}</b> cliques</span><span class="arr">→</span>
+        <span class="stp"><b>${c.forms_mes}</b> formulários ${txForm!=null?`(${(txForm*100).toLocaleString("pt-BR",{maximumFractionDigits:1})}%)`:""}</span><span class="arr">→</span>
+        <span class="stp"><b>${c.vendas_mes}</b> vendas · ${fmtK(c.vendas_net_mes)}</span></div>`;
+    }
+
+    // card A/B site × WhatsApp (TJ blindado)
+    let abx = "";
+    if (info.ab){
+      const agg = {};
+      for (const ad of c.ads){
+        const g = (agg[ad.adset] ??= {spend:0, ilc:0});
+        g.spend += ad.j7.spend; g.ilc += ad.j7.ilc;
+      }
+      const A = agg[info.ab.a] || {spend:0, ilc:0}, B = agg[info.ab.b] || {spend:0, ilc:0};
+      const cpcA = A.ilc > 0 ? A.spend/A.ilc : null, cpcB = B.ilc > 0 ? B.spend/B.ilc : null;
+      abx = `<div class="abx"><div class="abt">Teste A/B · site × WhatsApp Anne (7d)</div>
+        <div class="abrow"><span>${esc(info.ab.a)}: <b>${fmtR2(A.spend)}</b> · ${A.ilc} cliques · custo/clique <b>${fmtCusto(cpcA)}</b></span>
+        <span>${esc(info.ab.b)}: <b>${fmtR2(B.spend)}</b> · ${B.ilc} cliques · custo/clique <b>${fmtCusto(cpcB)}</b></span></div>
+        <div class="abwarn">⏳ veredito em ${esc(info.ab.fim)} — não mexer antes da janela fechar.</div></div>`;
+    }
+
+    h += `<div class="camp">
+      <div class="ch"><div>
+        <h3><span class="dotst${ativo?"":" off"}"></span>${esc(info.t)}</h3>
+        <div class="obj"><b>${esc(info.obj)}</b> · ${esc(c.nome)}</div>
+        <div class="pub">${esc(info.pub)}</div>
+      </div><div class="acct">${esc(info.conta)}${ativo?"":" · "+esc(c.status)}</div></div>
+      <div class="kpis">
+        <div class="kp">Gasto 7 dias<b>${fmtR2(tot7.spend)}</b></div>
+        <div class="kp">Orçamento/dia${cap!=null?` <span style="opacity:.7">(${info.diaria!=null?"plano":"Meta"})</span>`:""}<b>${cap!=null?fmtR(cap):"—"}</b></div>
+        <div class="kp ${kcls}">${kpiLbl} <span style="opacity:.7">(faixa ≤${info.faixa.ok}/${info.faixa.stop})</span><b>${fmtCusto(kpiMes)}</b></div>
+        <div class="kp">${info.tipo==="lead"?"Leads mês":"Conversões mês"}<b>${totM.conv.toLocaleString("pt-BR")}</b></div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <tr><th>Anúncio (7d)</th><th>Gasto</th><th>CTR</th><th>Hook</th><th>Hold</th><th>${info.tipo==="lead"?"CPL":"CPA"}</th><th>${info.tipo==="lead"?"Leads mês":info.tipo==="blindado"?"Vendas mês":"Vendas px mês"}</th><th></th></tr>
+        ${rows || `<tr><td colspan="8" style="text-align:left;color:var(--muted)">sem anúncios com entrega nas janelas</td></tr>`}
+      </table></div>
+      ${funilPos}${abx}
+    </div>`;
+  }
+  box.innerHTML = h;
 }
 
 /* ---- 5 · alertas ---- */
