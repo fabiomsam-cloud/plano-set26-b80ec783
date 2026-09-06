@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>SOU · Plano Setembro 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#0c0d0f; --surface:#17181b; --surface-2:#1f2024;
+  --ink:#ffffff; --ink-2:#c6c5bc; --muted:#8b8983;
+  --grid:#2b2c30; --ring:rgba(255,255,255,.10);
+  --gold:#d9a53f; --gold-soft:rgba(217,165,63,.14);
+  --blue:#3987e5; --green:#1fa878; --red:#d5544e; --amber:#c98500;
+  --good:#1fa878; --warn:#c98500; --critical:#d5544e;
+  --disp:"Bricolage Grotesque",sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scrollbar-color:#3a3a38 var(--page)}
+body{background:var(--page);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;min-height:100vh;position:relative}
+body::before{content:"";position:absolute;left:0;right:0;top:0;height:820px;pointer-events:none;z-index:0;
+  background:radial-gradient(1100px 460px at 80% -10%, rgba(217,165,63,.10), transparent 60%),
+             radial-gradient(860px 400px at -8% 2%, rgba(57,135,229,.06), transparent 55%)}
+body::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
+.wrap{position:relative;z-index:1;max-width:1380px;margin:0 auto;padding:26px 30px 90px}
+
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:16px}
+.brand h1{font-family:var(--disp);font-weight:800;font-size:31px;letter-spacing:-.6px;line-height:1.02}
+.brand h1 em{font-style:normal;color:var(--gold)}
+.brand .sub{color:var(--muted);font-size:12.5px;margin-top:7px;letter-spacing:.2px}
+.brand .sub b{color:var(--ink-2);font-weight:600}
+.stamp{text-align:right;font-size:12px;color:var(--muted)}
+.stamp .clock{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--ink-2);letter-spacing:-.2px}
+.stamp .upd b{color:var(--ink-2)}
+
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:15px;padding:20px 22px;position:relative;overflow:hidden}
+.card h2{font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:-.2px}
+.card .hint{color:var(--muted);font-size:12px;margin-top:3px}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.grid{display:grid;gap:12px;margin-bottom:12px}
+.g-two{grid-template-columns:1.35fr 1fr}
+.g-fun{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:1080px){.g-two,.g-fun{grid-template-columns:1fr}}
+
+/* ---------- countdown rail ---------- */
+.rail{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.cd{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:9px 14px;display:flex;align-items:baseline;gap:8px}
+.cd .n{font-family:var(--disp);font-weight:800;font-size:21px;color:var(--gold);letter-spacing:-.4px}
+.cd .n.now{color:var(--green)}
+.cd .l{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.cd.fim{border-color:rgba(217,165,63,.45);background:linear-gradient(140deg,#221c0e 0%,var(--surface) 60%)}
+.cd.d1{border-color:rgba(213,84,78,.4)}
+.cd.d1 .n{color:var(--red)}
+.d1note{align-self:center;font-size:12px;color:var(--ink-2);background:rgba(213,84,78,.10);border:1px solid rgba(213,84,78,.3);
+  border-radius:10px;padding:8px 13px}
+.d1note b{color:#ff9d97}
+
+/* ---------- termômetro ---------- */
+.thermo-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:760px){.thermo-kpis{grid-template-columns:1fr 1fr}}
+.tk{background:var(--surface-2);border-radius:12px;padding:13px 15px}
+.tk .l{color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.tk .v{font-family:var(--disp);font-weight:800;font-size:24px;margin-top:5px;letter-spacing:-.4px}
+.tk .s{font-size:11.5px;color:var(--muted);margin-top:3px}
+.tk.medido .v{color:var(--gold)}
+.tk.proj .v{color:var(--ink)}
+.badge-est{display:inline-block;background:rgba(57,135,229,.16);color:#7db2f0;border:1px dashed rgba(57,135,229,.5);
+  font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;vertical-align:2px}
+.thermo{margin:6px 0 8px}
+.thermo .track{position:relative;height:34px;background:var(--surface-2);border-radius:10px;overflow:visible}
+.thermo .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#a87b23,var(--gold));border-radius:10px 0 0 10px;min-width:3px}
+.thermo .fill-est{position:absolute;top:0;bottom:0;border-radius:0;opacity:.85;
+  background:repeating-linear-gradient(135deg, rgba(57,135,229,.42) 0 7px, rgba(57,135,229,.16) 7px 14px)}
+.thermo .mark{position:absolute;top:-7px;bottom:-7px;width:2px;background:var(--ink-2)}
+.thermo .mark.meta{background:var(--gold);width:3px;box-shadow:0 0 10px rgba(217,165,63,.7)}
+.thermo .mlab{position:absolute;top:-26px;transform:translateX(-50%);font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+.thermo .mlab b{color:var(--ink-2)}
+.thermo .mlab.meta b{color:var(--gold)}
+.thermo-scale{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:8px;font-variant-numeric:tabular-nums}
+.est-list{margin-top:14px;border-top:1px solid rgba(255,255,255,.06);padding-top:12px}
+.est-list .er{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12.5px;color:var(--ink-2)}
+.est-list .er b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.vday{display:flex;align-items:flex-end;gap:4px;height:74px;margin-top:14px}
+.vday .vb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}
+.vday .bar{width:100%;max-width:34px;background:var(--gold);border-radius:4px 4px 0 0;min-height:2px;opacity:.9}
+.vday .dl{font-size:9.5px;color:var(--muted);white-space:nowrap}
+.vday .dv{font-size:9.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- verba ---------- */
+.vrow{display:grid;grid-template-columns:150px 1fr 92px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.vrow:last-child{border-bottom:0}
+.vrow .name{font-size:12.5px;color:var(--ink-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vrow .name small{display:block;color:var(--muted);font-weight:400;font-size:10.5px}
+.vrow .track{height:15px;background:var(--surface-2);border-radius:5px;overflow:hidden;position:relative}
+.vrow .fill{height:100%;border-radius:5px;min-width:2px;background:var(--green)}
+.vrow .fill.over{background:var(--red)}
+.vrow .fill.near{background:var(--amber)}
+.vrow .cap{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.45)}
+.vrow .num{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2)}
+.vrow .num b{color:var(--ink);display:block;font-size:12.5px}
+.vrow.total{border-top:1px solid var(--ring);margin-top:4px;padding-top:12px}
+.vrow.total .name{color:var(--ink);font-size:13px}
+.vtabs{display:flex;background:var(--surface-2);border-radius:9px;padding:3px;gap:2px}
+.vtab{border:0;background:transparent;color:var(--ink-2);font-family:var(--body);font-size:12px;font-weight:600;
+  padding:5px 12px;border-radius:7px;cursor:pointer}
+.vtab.on{background:var(--gold);color:#161204}
+.note{font-size:11.5px;color:var(--muted);margin-top:12px}
+
+/* ---------- funil ---------- */
+.fcard h3{font-family:var(--disp);font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:8px}
+.fcard .cpl{margin:10px 0 14px;display:flex;gap:10px;flex-wrap:wrap}
+.pill{background:var(--surface-2);border-radius:9px;padding:7px 12px;font-size:12px;color:var(--muted)}
+.pill b{display:block;font-family:var(--disp);font-size:17px;font-weight:700;color:var(--ink);margin-top:1px}
+.pill.ok b{color:var(--green)} .pill.mid b{color:var(--amber)} .pill.bad b{color:var(--red)}
+.frow{display:grid;grid-template-columns:86px 1fr 118px;gap:10px;align-items:center;padding:7px 0}
+.frow .fl{font-size:12px;color:var(--ink-2);font-weight:600}
+.frow .track{height:16px;background:var(--surface-2);border-radius:5px;overflow:hidden;position:relative}
+.frow .fill{height:100%;border-radius:5px;background:var(--blue);min-width:2px}
+.frow .goal{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.55)}
+.frow .fv{text-align:right;font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.frow .fv b{color:var(--ink);font-size:12.5px}
+.frow .fv .pc{font-weight:700}
+.pc.ok{color:var(--green)} .pc.bad{color:var(--red)}
+.soon{display:flex;flex-direction:column;gap:9px}
+.soon .si{display:flex;justify-content:space-between;gap:10px;background:var(--surface-2);border-radius:10px;padding:10px 13px;font-size:12.5px}
+.soon .si .sn{color:var(--ink);font-weight:600}
+.soon .si .ss{color:var(--muted);text-align:right}
+.tag-soon{display:inline-block;background:rgba(201,133,0,.14);color:#e8b45c;border:1px dashed rgba(201,133,0,.45);
+  font-size:10px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:6px}
+
+/* ---------- calendário ---------- */
+.cal{display:flex;flex-direction:column}
+.ci{display:grid;grid-template-columns:96px 14px 1fr auto;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.ci:last-child{border-bottom:0}
+.ci .cd8{font-size:11.5px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;padding-top:2px;white-space:nowrap}
+.ci .dot{width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--muted);flex-shrink:0}
+.ci.feito .dot{background:var(--green)}
+.ci.hoje .dot{background:var(--gold);box-shadow:0 0 9px rgba(217,165,63,.8)}
+.ci.atrasado .dot{background:var(--red)}
+.ci .ct{font-size:13px;color:var(--ink);font-weight:500}
+.ci .ct small{display:block;color:var(--muted);font-size:11.5px;font-weight:400;margin-top:1px}
+.ci.feito .ct{color:var(--ink-2);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25);text-decoration-thickness:1px}
+.st{font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:6px;white-space:nowrap;margin-top:2px}
+.st.feito{background:rgba(31,168,120,.15);color:#5fd3ab}
+.st.hoje{background:var(--gold-soft);color:var(--gold)}
+.st.pendente{background:rgba(255,255,255,.06);color:var(--muted)}
+.st.atrasado{background:rgba(213,84,78,.16);color:#ff9d97}
+
+/* ---------- alertas ---------- */
+.alert-row{display:flex;align-items:center;gap:14px;padding:11px 14px;border-left:3px solid var(--critical);
+  background:rgba(213,84,78,.07);border-radius:0 10px 10px 0;margin-bottom:8px;flex-wrap:wrap}
+.alert-row.warn{border-left-color:var(--amber);background:rgba(201,133,0,.07)}
+.alert-row .an{flex:1;min-width:200px;font-weight:600;color:var(--ink);font-size:13px}
+.alert-row .av{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--ink-2)}
+.all-ok{display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;
+  background:rgba(31,168,120,.09);border:1px solid rgba(31,168,120,.3);color:#5fd3ab;font-weight:600;font-size:14px}
+.all-ok .ic{font-size:20px}
+
+.err{background:rgba(213,84,78,.1);border:1px solid rgba(213,84,78,.4);border-radius:12px;padding:16px;color:#ff9d97;font-size:13px;margin-bottom:12px;display:none}
+footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
+@media(max-width:640px){
+  .wrap{padding:18px 14px 70px}
+  .brand h1{font-size:24px}
+  .vrow{grid-template-columns:110px 1fr 78px}
+  .frow{grid-template-columns:72px 1fr 104px}
+  .ci{grid-template-columns:78px 12px 1fr auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">
+    <h1>PLANO SETEMBRO · <em>R$ 536 mil</em></h1>
+    <div class="sub">Funil perpétuo, não lançamento · faixa <b>R$ 389–692 mil</b> líquidos · teto Meta <b>R$ 1.900/dia</b> em linha reta até 30/09</div>
+  </div>
+  <div class="stamp">
+    <div class="clock" id="clock">—</div>
+    <div class="upd">último dado: <b id="upd">carregando…</b></div>
+    <div>fuso America/Manaus · atualiza a cada 5 min</div>
+  </div>
+</header>
+
+<div class="rail" id="rail"></div>
+
+<div class="err" id="err"></div>
+
+<!-- ============ 1 · TERMÔMETRO ============ -->
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>Termômetro da meta</h2>
+      <div class="hint">Receita <b style="color:var(--ink-2)">líquida</b> de setembro (faturas pagas na Hubla) + blocos ainda não instrumentados como <span class="badge-est">ESTIMADO</span></div>
+    </div>
+  </div>
+  <div class="thermo-kpis">
+    <div class="tk medido"><div class="l">Medido (Hubla)</div><div class="v" id="t-medido">—</div><div class="s" id="t-medido-s">faturas pagas no mês</div></div>
+    <div class="tk"><div class="l">Estimados <span class="badge-est">EST</span></div><div class="v" id="t-est">—</div><div class="s">blocos sem instrumentação</div></div>
+    <div class="tk proj"><div class="l">Projeção (medido + est.)</div><div class="v" id="t-proj">—</div><div class="s" id="t-proj-s">—</div></div>
+    <div class="tk"><div class="l">Falta p/ 536 mil</div><div class="v" id="t-falta">—</div><div class="s" id="t-pace">—</div></div>
+  </div>
+  <div class="thermo" style="margin-top:34px">
+    <div class="track" id="thermo-track">
+      <div class="fill" id="th-fill"></div>
+      <div class="fill-est" id="th-fill-est"></div>
+    </div>
+    <div class="thermo-scale"><span>R$ 0</span><span>R$ 180k</span><span>R$ 360k</span><span>R$ 540k</span><span>R$ 720k</span></div>
+  </div>
+  <div class="est-list" id="est-list"></div>
+  <div class="vday" id="vday"></div>
+  <div class="note">Barra dourada = medido (líquido, caixa por data de pagamento). Faixa azul tracejada = estimados do plano — o valor real vai substituindo conforme cada bloco for instrumentado.</div>
+</div>
+
+<div class="grid g-two">
+  <!-- ============ 2 · VERBA DO DIA ============ -->
+  <div class="card">
+    <div class="card-head">
+      <div><h2>Verba do dia por frente</h2>
+        <div class="hint">Gasto Meta (série diária) vs diária do plano · teto global R$ 1.900/dia</div></div>
+      <div class="vtabs">
+        <button class="vtab" id="vt-ontem">Ontem</button>
+        <button class="vtab on" id="vt-hoje">Hoje</button>
+      </div>
+    </div>
+    <div id="verba"></div>
+    <div class="note" id="verba-note">Gasto de <b>hoje</b> é parcial — a sincronização com a Meta roda ao longo do dia.</div>
+  </div>
+
+  <!-- ============ 5 · ALERTAS ============ -->
+  <div class="card">
+    <div class="card-head">
+      <div><h2>Alertas</h2><div class="hint">Réguas do plano: teto de verba, faixas de CPL e metas do funil</div></div>
+    </div>
+    <div id="alertas"></div>
+    <div class="note">Faixas (escalar/parar): TJ ≤5/8 · SEDUC-PA ≤4,5/6,5 · SEDUC-AM ≤7/12 · Polícias ≤9/14 · PRF ≤55/75 · Play Passei CPA ≤200/300 · blindado TJ ≤150/350, SEDUC/SEMSA ≤110/250. Julgamento só com janela fechada (3–7 dias).</div>
+  </div>
+</div>
+
+<!-- ============ 3 · FUNIL FASE 1 ============ -->
+<div class="grid g-fun">
+  <div class="card fcard" id="funil-tjam"></div>
+  <div class="card fcard" id="funil-seducpa"></div>
+  <div class="card fcard">
+    <h3>Demais frentes <span class="tag-soon">INSTRUMENTAÇÃO A CAMINHO</span></h3>
+    <div class="hint" style="margin:6px 0 14px">Entram no painel assim que cada funil nascer e for medido — sem números inventados.</div>
+    <div class="soon">
+      <div class="si"><span class="sn">SEDUC-AM · Webinário</span><span class="ss">gravação 08/09 → plataforma → campanha</span></div>
+      <div class="si"><span class="sn">Polícias AM · Webinário</span><span class="ss">insumos 08/09 · @deltafabiosilva</span></div>
+      <div class="si"><span class="sn">PRF · Quiz + ingresso</span><span class="ss">página quiz + VSL 08/09</span></div>
+      <div class="si"><span class="sn">Play Passei · Webinário</span><span class="ss">CAPI + ponte Vturb pendentes</span></div>
+      <div class="si"><span class="sn">Blindado (VD)</span><span class="ss">medido por CPA na aba de verba/alertas</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4 · CALENDÁRIO ============ -->
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>Calendário do mês</h2><div class="hint">Marcos do plano de execução — status automático pelo dia (Manaus)</div></div>
+  </div>
+  <div class="cal" id="cal"></div>
+</div>
+
+<footer>PLANO SETEMBRO/2026 · Grupo SOU — Sou Concurseiro e Vou Passar · painel interno · receita sempre líquida</footer>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const API  = "https://dqpxugdhlgafvddavzzp.supabase.co/functions/v1/dashboard-plano";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxcHh1Z2RobGdhZnZkZGF2enpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxODQ1NTMsImV4cCI6MjA5Nzc2MDU1M30.nUhYPO3oLUZEXgQCDlRtL-Jawi0nr0l1Z7_z5ecEXvc";
+const K = new URLSearchParams(location.search).get("k") || "";
+
+const META = 536000, CONSERV = 389000, OTIM = 692000, ESCALA = 720000;
+const TETO_DIA = 1900;
+
+// Frentes do plano (diária aprovada no Plano-Verba v29)
+const FRENTES = [
+  {id:"tjam",      nome:"TJ-AM · Webinário",    diaria:380},
+  {id:"policias",  nome:"Polícias AM",          diaria:330},
+  {id:"blindado",  nome:"Blindado (3×120)",     diaria:360},
+  {id:"playpassei",nome:"Play Passei",          diaria:290},
+  {id:"prf",       nome:"PRF",                  diaria:200},
+  {id:"seducpa",   nome:"SEDUC-PA · Webinário", diaria:180},
+  {id:"seducam",   nome:"SEDUC-AM · Webinário", diaria:160},
+];
+// ordem importa: PP antes de PRF (campanhas [PP][...][PRF]); SEMSA cai no blindado
+function classificar(nome){
+  const n = (nome||"").toUpperCase();
+  if (/BLINDADO/.test(n)) return "blindado";
+  if (/PLAYPASSEI|PLAY PASSEI|\[PP\]/.test(n)) return "playpassei";
+  if (/PRF/.test(n)) return "prf";
+  if (/POLIC|DELTA/.test(n)) return "policias";
+  if (/SEDUC[\s_-]?PA|SEDUCPA/.test(n)) return "seducpa";
+  if (/SEDUC[\s_-]?AM|SEDUCAM/.test(n)) return "seducam";
+  if (/SEMSA/.test(n)) return "blindado";
+  if (/TJ[\s_-]?AM|TJAM|TRIBUNA/.test(n)) return "tjam";
+  return "outras";
+}
+// CPL faixas escalar/parar (janela 3–7d) — CPL medível hoje só p/ webinários instrumentados
+const CPL_FAIXA = { tjam:{ok:5,stop:8}, seducpa:{ok:4.5,stop:6.5} };
+// Metas Fase 1 (encadeadas): sala/inscritos · pitch/sala · checkout/pitch · compra/checkout
+const METAS_FUNIL = { sala:.75, pitch:.45, checkout:.30, compra:.15 };
+
+// Calendário-mestre (edite feito:true quando um marco fechar)
+const CAL = [
+  {de:"2026-09-05", ate:"2026-09-05", t:"Blindado no ar — TJ-AM, SEDUC-AM e SEMSA (R$ 120/dia cada)", d:"campanhas [PLANO][BLINDADO] ativas + UTM do checkout blindado", feito:true},
+  {de:"2026-09-05", ate:"2026-09-05", t:"Pulsos 7h/19h → MARCOM agendados", d:"cobrança diária do calendário no WhatsApp", feito:true},
+  {de:"2026-09-06", ate:"2026-09-08", t:"Construções: roteiros + gravações do Fábio", d:"mini VSL PRF · esqueleto Polícias · gravação SEDUC-AM", feito:false},
+  {de:"2026-09-08", ate:"2026-09-08", t:"SEDUC-AM, Polícias AM, PRF quiz e Play Passei NO AR", d:"4 frentes estreiam juntas — verba sobe p/ o teto completo", feito:false},
+  {de:"2026-09-08", ate:"2026-09-13", t:"Semana técnica: parcelamento + agentes + Fase 2", d:"flag webhook parcelamento · UTM Play Passei · 3 agentes de nutrição + grupos Sendflow · instrumentação Fase 2", feito:false},
+  {de:"2026-09-14", ate:"2026-09-18", t:"Estude Comigo 1 — TJ-AM · SEDUC-AM · SEDUC-PA", d:"5 msgs/semana com ações de venda", feito:false},
+  {de:"2026-09-21", ate:"2026-09-21", t:"LIVE CPL · TJ-AM", d:"conferir premissa de conversão 3% do funil completo em 22/09", feito:false},
+  {de:"2026-09-21", ate:"2026-09-25", t:"Estude Comigo 2 — Polícias · PRF", d:"", feito:false},
+  {de:"2026-09-22", ate:"2026-09-22", t:"LIVE CPL · SEDUC-AM", d:"", feito:false},
+  {de:"2026-09-23", ate:"2026-09-23", t:"LIVE CPL · SEDUC-PA", d:"", feito:false},
+  {de:"2026-09-26", ate:"2026-09-28", t:"Processos 1 e 2 do D1 + oferta D1 montada", d:"abandono de carrinho Hubla×base + régua na Anne + bônus 24h / à vista — no ar ANTES de 29/09", feito:false},
+  {de:"2026-09-28", ate:"2026-09-28", t:"LIVE · Polícias AM", d:"carrinho abre 29/09", feito:false},
+  {de:"2026-09-29", ate:"2026-09-29", t:"D1 CARRINHO POLÍCIAS + Live PRF", d:"79% da receita do carrinho sai no D1", feito:false},
+  {de:"2026-09-30", ate:"2026-09-30", t:"D1 CARRINHO PRF · fechamento da meta", d:"último dia do plano", feito:false},
+];
+const LIVES = [
+  {d:"2026-09-21", l:"Live TJ-AM"}, {d:"2026-09-22", l:"Live SEDUC-AM"}, {d:"2026-09-23", l:"Live SEDUC-PA"},
+  {d:"2026-09-28", l:"Live Polícias"}, {d:"2026-09-29", l:"D1 Polícias · Live PRF", d1:true}, {d:"2026-09-30", l:"D1 PRF · fim do plano", d1:true},
+];
+
+/* ================= HELPERS ================= */
+const $ = id => document.getElementById(id);
+const fmtR = v => "R$ " + Math.round(v).toLocaleString("pt-BR");
+const fmtR2 = v => "R$ " + v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtK = v => v>=1000 ? "R$ " + (v/1000).toLocaleString("pt-BR",{maximumFractionDigits:0}) + "k" : fmtR(v);
+const pct = (a,b) => b>0 ? a/b : null;
+const fmtPct = p => p==null ? "—" : Math.round(p*100) + "%";
+const hojeManaus = () => new Date(Date.now() - 4*3600e3).toISOString().slice(0,10);
+const ontemManaus = () => new Date(Date.now() - 28*3600e3).toISOString().slice(0,10);
+const ddmm = iso => iso.slice(8,10) + "/" + iso.slice(5,7);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function relogio(){
+  $("clock").textContent = new Date().toLocaleString("pt-BR",
+    {timeZone:"America/Manaus", day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"}).replace(",", " ·");
+}
+relogio(); setInterval(relogio, 30000);
+
+/* ================= COUNTDOWN (bloco 6) ================= */
+function renderRail(){
+  const hoje = hojeManaus();
+  const dias = d => Math.round((Date.parse(d) - Date.parse(hoje)) / 86400e3);
+  let h = "";
+  const dfim = dias("2026-09-30");
+  h += `<div class="cd fim"><span class="n">${Math.max(dfim,0)}</span><span class="l">dias até 30/09</span></div>`;
+  for (const lv of LIVES){
+    const n = dias(lv.d);
+    if (n < 0) continue;
+    h += `<div class="cd${lv.d1?" d1":""}"><span class="n${n===0?" now":""}">${n===0?"HOJE":n}</span><span class="l">${esc(lv.l)} · ${ddmm(lv.d)}</span></div>`;
+  }
+  h += `<div class="d1note"><b>79% da receita do carrinho sai no D1</b> — sem margem de erro nos dias 29 e 30.</div>`;
+  $("rail").innerHTML = h;
+}
+renderRail();
+
+/* ================= CALENDÁRIO (bloco 4) ================= */
+function renderCal(){
+  const hoje = hojeManaus();
+  $("cal").innerHTML = CAL.map(m => {
+    let st = "pendente";
+    if (m.feito) st = "feito";
+    else if (hoje >= m.de && hoje <= m.ate) st = "hoje";
+    else if (m.ate < hoje) st = "atrasado";
+    const per = m.de === m.ate ? ddmm(m.de) : ddmm(m.de) + "–" + ddmm(m.ate);
+    const lab = {feito:"FEITO", hoje:"HOJE", pendente:"PENDENTE", atrasado:"ATRASADO"}[st];
+    return `<div class="ci ${st}"><div class="cd8">${per}</div><div class="dot"></div>
+      <div class="ct">${esc(m.t)}${m.d?`<small>${esc(m.d)}</small>`:""}</div>
+      <span class="st ${st}">${lab}</span></div>`;
+  }).join("");
+}
+renderCal();
+
+/* ================= DADOS ================= */
+let RAW = null, verbaDia = "hoje";
+
+async function load(){
+  try{
+    const r = await fetch(API + "?k=" + encodeURIComponent(K), {headers:{Authorization:"Bearer "+ANON, apikey:ANON}});
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    RAW = d;
+    $("err").style.display = "none";
+    $("upd").textContent = new Date(d.generated_at).toLocaleString("pt-BR",
+      {timeZone:"America/Manaus", day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"});
+    renderAll();
+  }catch(e){
+    $("err").style.display = "block";
+    $("err").textContent = "Falha ao carregar os dados: " + e.message + (K ? "" : " — confira o token ?k= na URL.");
+  }
+}
+
+function spendPorFrente(dia){
+  const por = {}; let total = 0;
+  for (const r of (RAW.meta_spend||[])){
+    if (r.period_start !== dia) continue;
+    const f = classificar(r.campaign_name);
+    por[f] = (por[f]||0) + Number(r.spend||0);
+    total += Number(r.spend||0);
+  }
+  return {por, total};
+}
+function spendFrenteJanela(fid, deISO, ateISO){
+  let s = 0;
+  for (const r of (RAW.meta_spend||[])){
+    if (r.period_start < deISO || r.period_start > ateISO) continue;
+    if (classificar(r.campaign_name) === fid) s += Number(r.spend||0);
+  }
+  return s;
+}
+
+/* ================= RENDER ================= */
+function renderAll(){
+  renderRail(); renderCal();
+  renderTermometro();
+  renderVerba();
+  renderFunis();
+  renderAlertas();
+}
+
+/* ---- 1 · termômetro ---- */
+function renderTermometro(){
+  const vd = RAW.vendas_dia || {};
+  const medido = Object.values(vd).reduce((a,x)=>a+x.net, 0);
+  const nFat = Object.values(vd).reduce((a,x)=>a+x.n, 0);
+  const est = (RAW.estimados||[]).reduce((a,x)=>a+x.valor, 0);
+  const proj = medido + est;
+  const hoje = hojeManaus();
+  const diaN = Math.min(30, Number(hoje.slice(8,10)));
+  const mesPct = diaN/30;
+
+  $("t-medido").textContent = fmtK(medido);
+  $("t-medido-s").textContent = nFat.toLocaleString("pt-BR") + " faturas pagas · " + Math.round(medido/META*100) + "% da meta";
+  $("t-est").textContent = fmtK(est);
+  $("t-proj").textContent = fmtK(proj);
+  $("t-proj-s").textContent = Math.round(proj/META*100) + "% da meta de R$ 536k";
+  $("t-falta").textContent = fmtK(Math.max(META - medido, 0));
+  $("t-pace").textContent = "dia " + diaN + " de 30 (" + Math.round(mesPct*100) + "% do mês)";
+
+  const track = $("thermo-track");
+  $("th-fill").style.width = Math.min(medido/ESCALA*100, 100) + "%";
+  const fe = $("th-fill-est");
+  fe.style.left = Math.min(medido/ESCALA*100, 100) + "%";
+  fe.style.width = Math.max(Math.min(proj/ESCALA*100, 100) - medido/ESCALA*100, 0) + "%";
+  track.querySelectorAll(".mark,.mlab").forEach(el=>el.remove());
+  for (const [v,l,cls] of [[CONSERV,"389k · conservador",""],[META,"536k · META","meta"],[OTIM,"692k · otimista",""]]){
+    const x = v/ESCALA*100;
+    track.insertAdjacentHTML("beforeend",
+      `<div class="mark ${cls}" style="left:${x}%"></div><div class="mlab ${cls}" style="left:${x}%"><b>${l.split(" · ")[0]}</b> ${l.split(" · ")[1]}</div>`);
+  }
+
+  $("est-list").innerHTML = (RAW.estimados||[]).map(e =>
+    `<div class="er"><span>${esc(e.nome)} <span class="badge-est">ESTIMADO</span></span><b>${fmtR(e.valor)}</b></div>`).join("");
+
+  const dias = Object.keys(vd).sort();
+  const max = Math.max(...dias.map(d=>vd[d].net), 1);
+  $("vday").innerHTML = dias.map(d =>
+    `<div class="vb"><span class="dv">${fmtK(vd[d].net)}</span><div class="bar" style="height:${Math.max(vd[d].net/max*52,2)}px"></div><span class="dl">${ddmm(d)}</span></div>`).join("");
+}
+
+/* ---- 2 · verba ---- */
+function renderVerba(){
+  const dia = verbaDia === "hoje" ? hojeManaus() : ontemManaus();
+  const {por, total} = spendPorFrente(dia);
+  const maxScale = Math.max(...FRENTES.map(f=>Math.max(f.diaria, por[f.id]||0)), 1) * 1.15;
+  let h = "";
+  for (const f of FRENTES){
+    const g = por[f.id] || 0;
+    const r = g / f.diaria;
+    const cls = r > 1.1 ? "over" : r > 0.92 ? "near" : "";
+    h += `<div class="vrow"><div class="name">${esc(f.nome)}<small>diária R$ ${f.diaria}</small></div>
+      <div class="track"><div class="fill ${cls}" style="width:${Math.min(g/maxScale*100,100)}%"></div>
+        <div class="cap" style="left:${Math.min(f.diaria/maxScale*100,100)}%"></div></div>
+      <div class="num"><b>${fmtR2(g)}</b>${Math.round(r*100)}% da diária</div></div>`;
+  }
+  const outras = por["outras"] || 0;
+  if (outras > 0.5){
+    h += `<div class="vrow"><div class="name" style="color:var(--muted)">Outras campanhas<small>fora das frentes do plano</small></div>
+      <div class="track"><div class="fill" style="width:${Math.min(outras/maxScale*100,100)}%;background:var(--muted)"></div></div>
+      <div class="num"><b>${fmtR2(outras)}</b></div></div>`;
+  }
+  const rT = total / TETO_DIA;
+  h += `<div class="vrow total"><div class="name">TOTAL vs teto<small>teto R$ 1.900/dia</small></div>
+    <div class="track"><div class="fill ${rT>1?"over":rT>0.92?"near":""}" style="width:${Math.min(rT*100,100)}%"></div></div>
+    <div class="num"><b>${fmtR2(total)}</b>${Math.round(rT*100)}% do teto</div></div>`;
+  $("verba").innerHTML = h;
+  $("verba-note").innerHTML = verbaDia === "hoje"
+    ? "Gasto de <b>hoje</b> é parcial — a sincronização com a Meta roda ao longo do dia."
+    : "Fechamento de <b>ontem</b> (" + ddmm(dia) + ") — dia calendário de Manaus.";
+}
+$("vt-hoje").onclick = ()=>{ verbaDia="hoje"; $("vt-hoje").classList.add("on"); $("vt-ontem").classList.remove("on"); renderVerba(); };
+$("vt-ontem").onclick = ()=>{ verbaDia="ontem"; $("vt-ontem").classList.add("on"); $("vt-hoje").classList.remove("on"); renderVerba(); };
+
+/* ---- 3 · funil ---- */
+function agregaFunil(code){
+  const dias = RAW.funil_dia?.[code] || {};
+  const t = {inscritos:0, sala:0, pitch:0, checkout:0};
+  for (const d of Object.values(dias)) for (const k in t) t[k] += d[k];
+  const compras = RAW.compras_web_dia?.[code] || {};
+  t.compras = Object.values(compras).reduce((a,x)=>a+x.n,0);
+  t.comprasNet = Object.values(compras).reduce((a,x)=>a+x.net,0);
+  return t;
+}
+function funilCard(elId, code, fid, nome){
+  const t = agregaFunil(code);
+  const spendMes = spendFrenteJanela(fid, "2026-09-01", hojeManaus());
+  const cpl = t.inscritos > 0 ? spendMes / t.inscritos : null;
+  const fx = CPL_FAIXA[fid];
+  const cplCls = cpl==null||!fx ? "" : cpl <= fx.ok ? "ok" : cpl <= fx.stop ? "mid" : "bad";
+  // [rótulo, valor, denominador da etapa anterior, meta]
+  const etapas = [
+    ["Inscritos", t.inscritos, null, null],
+    ["Sala", t.sala, t.inscritos, METAS_FUNIL.sala],
+    ["Pitch", t.pitch, t.sala, METAS_FUNIL.pitch],
+    ["Checkout", t.checkout, t.pitch, METAS_FUNIL.checkout],
+    ["Compras", t.compras, t.checkout, METAS_FUNIL.compra],
+  ];
+  const maxE = Math.max(t.inscritos, 1);
+  let rows = "";
+  for (const [l, v, den, meta] of etapas){
+    const p = den==null ? null : pct(v, den);
+    const okCls = p==null||meta==null ? "" : (p >= meta ? "ok" : "bad");
+    const goalX = meta!=null && den ? Math.min(meta*den/maxE*100, 100) : null;
+    rows += `<div class="frow"><div class="fl">${l}</div>
+      <div class="track"><div class="fill" style="width:${Math.max(v/maxE*100, v>0?2:0)}%"></div>
+        ${goalX!=null?`<div class="goal" style="left:${goalX}%"></div>`:""}</div>
+      <div class="fv"><b>${v.toLocaleString("pt-BR")}</b> ${p!=null?`· <span class="pc ${okCls}">${fmtPct(p)}</span>${meta!=null?` <span style="color:var(--muted)">/ ${Math.round(meta*100)}%</span>`:""}`:""}</div></div>`;
+  }
+  $(elId).innerHTML = `<h3>${esc(nome)}</h3>
+    <div class="cpl">
+      <div class="pill ${cplCls}">CPL do mês<b>${cpl==null?"—":"R$ "+cpl.toLocaleString("pt-BR",{maximumFractionDigits:2})}</b></div>
+      <div class="pill">Investido<b>${fmtR(spendMes)}</b></div>
+      <div class="pill">Receita webinário<b>${fmtK(t.comprasNet)}</b></div>
+    </div>
+    ${rows}
+    <div class="note">Mês até agora · % encadeado etapa a etapa vs meta da Fase 1. "Compras" = faturas pagas com UTM do webinário. Etapa "link ≥85%" ainda sem medição separada — Sala/Inscritos já embute o clique no link.</div>`;
+}
+function renderFunis(){
+  funilCard("funil-tjam", "TJAM", "tjam", "TJ-AM · Webinário");
+  funilCard("funil-seducpa", "SEDUC_PA", "seducpa", "SEDUC-PA · Webinário");
+}
+
+/* ---- 5 · alertas ---- */
+function renderAlertas(){
+  const alerts = [];
+  const ontem = ontemManaus(), hoje = hojeManaus();
+  const gOntem = spendPorFrente(ontem), gHoje = spendPorFrente(hoje);
+  if (gOntem.total > TETO_DIA)
+    alerts.push({sev:"crit", t:"Teto de verba estourado ONTEM", v:fmtR2(gOntem.total) + " vs teto R$ 1.900 — realocar hoje"});
+  if (gHoje.total > TETO_DIA)
+    alerts.push({sev:"crit", t:"Teto de verba estourado HOJE (parcial)", v:fmtR2(gHoje.total) + " vs teto R$ 1.900"});
+
+  for (const [fid, code, nome] of [["tjam","TJAM","TJ-AM"],["seducpa","SEDUC_PA","SEDUC-PA"]]){
+    const t = agregaFunil(code);
+    const spend = spendFrenteJanela(fid, "2026-09-01", hoje);
+    const cpl = t.inscritos > 0 ? spend/t.inscritos : null;
+    const fx = CPL_FAIXA[fid];
+    if (cpl != null && fx){
+      if (cpl > fx.stop) alerts.push({sev:"crit", t:"CPL " + nome + " acima da faixa PARAR", v:"R$ " + cpl.toFixed(2) + " (parar > R$ " + fx.stop.toLocaleString("pt-BR") + ") — trocar criativo antes de cortar verba"});
+      else if (cpl > fx.ok) alerts.push({sev:"warn", t:"CPL " + nome + " na zona de atenção", v:"R$ " + cpl.toFixed(2) + " (escalar ≤ R$ " + fx.ok.toLocaleString("pt-BR") + ")"});
+    }
+    const checks = [["Sala", pct(t.sala,t.inscritos), METAS_FUNIL.sala, t.inscritos],
+                    ["Pitch", pct(t.pitch,t.sala), METAS_FUNIL.pitch, t.sala],
+                    ["Checkout", pct(t.checkout,t.pitch), METAS_FUNIL.checkout, t.pitch],
+                    ["Compra", pct(t.compras,t.checkout), METAS_FUNIL.compra, t.checkout]];
+    for (const [et, p, meta, den] of checks){
+      if (p != null && den >= 20 && p < meta)
+        alerts.push({sev:"warn", t:"Funil " + nome + ": etapa " + et + " abaixo da meta", v:fmtPct(p) + " vs meta " + Math.round(meta*100) + "%"});
+    }
+  }
+
+  $("alertas").innerHTML = alerts.length
+    ? alerts.map(a=>`<div class="alert-row ${a.sev==="warn"?"warn":""}"><div class="an">${esc(a.t)}</div><div class="av">${esc(a.v)}</div></div>`).join("")
+    : `<div class="all-ok"><span class="ic">✓</span> Tudo na régua — verba dentro do teto, CPL nas faixas e funil nas metas.</div>`;
+}
+
+load();
+setInterval(load, 300000); // 5 min
+</script>
+</body>
+</html>
