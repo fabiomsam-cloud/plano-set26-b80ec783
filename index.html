@@ -202,6 +202,31 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .all-ok .ic{font-size:20px}
 
 .err{background:rgba(213,84,78,.1);border:1px solid rgba(213,84,78,.4);border-radius:12px;padding:16px;color:#ff9d97;font-size:13px;margin-bottom:12px;display:none}
+
+/* ---- abas de página + aba Tráfego ---- */
+.page-tabs{display:flex;gap:4px;background:var(--surface-2);border-radius:11px;padding:4px;margin-bottom:14px;width:max-content}
+.ptab{border:0;background:transparent;color:var(--ink-2);font-family:var(--body);font-size:13.5px;font-weight:700;
+  padding:8px 18px;border-radius:8px;cursor:pointer}
+.ptab.on{background:var(--gold);color:#161204}
+.ck-h{font-size:13px;color:var(--ink-2);margin:0 0 10px}
+.ck-list{display:flex;flex-direction:column;gap:6px}
+.ck{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--surface-2);
+  cursor:pointer;border:1px solid transparent}
+.ck:hover{border-color:rgba(255,255,255,.12)}
+.ck input{margin-top:2px;accent-color:var(--gold);width:16px;height:16px;flex:none;cursor:pointer}
+.ck .ct{font-size:12.5px;color:var(--ink);font-weight:600;line-height:1.35}
+.ck .cd{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+.ck.done{opacity:.55}
+.ck.done .ct{text-decoration:line-through}
+.ck .when{font-size:10px;color:var(--gold);margin-top:2px}
+.rel-sec{padding:12px 14px;border-radius:11px;background:var(--surface-2);margin-bottom:10px;border-left:3px solid rgba(255,255,255,.14)}
+.rel-sec.ok{border-left-color:#1fa878}
+.rel-sec.warn{border-left-color:#d5a24e}
+.rel-sec h3{font-size:13.5px;margin:0 0 6px;color:var(--ink)}
+.rel-sec p{font-size:12.5px;color:var(--ink-2);margin:0 0 6px;line-height:1.55}
+.rel-sec p:last-child{margin-bottom:0}
+.rel-alert{color:#ffd9a0}
+.muted{color:var(--muted)}
 footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
 @media(max-width:640px){
   .wrap{padding:18px 14px 70px}
@@ -231,6 +256,13 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
 
 <div class="err" id="err"></div>
 
+<!-- ============ ABAS ============ -->
+<div class="page-tabs">
+  <button class="ptab on" data-tab="painel">📊 Painel</button>
+  <button class="ptab" data-tab="trafego">🚦 Tráfego</button>
+</div>
+
+<div id="tab-painel">
 <!-- ============ 1 · TERMÔMETRO ============ -->
 <div class="card" style="margin-bottom:12px">
   <div class="card-head">
@@ -317,6 +349,71 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
   </div>
   <div class="cal" id="cal"></div>
 </div>
+</div><!-- /tab-painel -->
+
+<!-- ============ ABA TRÁFEGO ============ -->
+<div id="tab-trafego" hidden>
+
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>✅ Demandas — o que falta e o que já foi</h2>
+      <div class="hint">Compartilhado: você marca as suas, o Claude marca as dele (e o pulso das 08h cobra as atrasadas). Salvo no Data Core — todos veem o mesmo estado.</div>
+    </div>
+  </div>
+  <div class="grid g-two">
+    <div>
+      <h3 class="ck-h">🎬 Do Fábio (criativos & insumos)</h3>
+      <div id="ck-fabio" class="ck-list"><p class="muted">carregando…</p></div>
+    </div>
+    <div>
+      <h3 class="ck-h">🤖 Do Claude (gestor de tráfego)</h3>
+      <div id="ck-claude" class="ck-list"><p class="muted">carregando…</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>🚦 Relatório da frota — 08/09/2026</h2>
+      <div class="hint">Snapshot do gestor de tráfego · webinários + blindados · números desde 04/09 · o pulso diário das 08h mantém a leitura viva</div>
+    </div>
+  </div>
+  <div id="rel-frota">
+
+  <div class="rel-sec ok"><h3>1 · 🏛️ Webinário TJ-AM — carro-chefe, acima da meta</h3>
+    <p><b>R$ 1.314</b> · 310 leads (CPL R$ 4,24; quente R$ 3,30) · <b>8 matrículas, R$ 12,4k em contratos</b> (7 à vista). Vs meta 04/09→04/10 (20–40 matr., R$ 31–62k): ritmo no teto da faixa, CAC pago ~R$ 350 (faixa 225–450).</p>
+    <p class="rel-alert">⚠️ Fadiga confirmada: CTR quente 3,5 → 2,1 e CPL diário em R$ 3,90 (teto 4). FRIO pausado 07/09 (CPL 13). <b>Criativos novos = urgência nº 1 da frota.</b> Próximos passos: remarketing (públicos pitch/clicou) e lookalike de matriculados ao bater ~20.</p>
+  </div>
+
+  <div class="rel-sec ok"><h3>2 · 🌴 Webinário SEDUC-PA — aqui o FRIO é o motor</h3>
+    <p><b>R$ 649</b> · 145 leads (CPL R$ 4,47) · funil saudável (66% sala · 34% pitch · 25 cliques) · <b>3 matrículas, R$ 2.030</b>. O conjunto FRIO roda a CPL ~R$ 4 com CTR 3–4 — mercado PA é grande. ROAS ~3,1x. Plano: escalar frio +20% a cada 3 dias + preparar remarketing PA.</p>
+  </div>
+
+  <div class="rel-sec ok"><h3>3 · 🍎 Webinário SEDUC-AM — melhor estreia</h3>
+    <p><b>R$ 68</b> desde 07/09 · 32 leads · <b>CPL R$ 2,12 · CTR 4+</b> nos dois conjuntos. 16 já entraram na sala, 5 no pitch. Verba tímida (~R$ 40/dia): dobra se o funil confirmar em 48h.</p>
+  </div>
+
+  <div class="rel-sec"><h3>4 · 🛡️ Blindado TJ-AM — cedo, sinais bons</h3>
+    <p><b>R$ 253</b> · CTR subiu 0,6 → 3,9 · 2 compras no pixel (R$ 1.757) · régua Anne: 21 toques → 1 conversão. O conjunto whatsapp-anne mede por conversa/venda Hubla, não por lead de pixel. Veredito na janela de 7 dias.</p>
+  </div>
+
+  <div class="rel-sec warn"><h3>5 · 🛡️ Blindado SEDUC-AM — funil salva, anúncio pede socorro</h3>
+    <p><b>R$ 325</b> · 3 vendas low-ticket (R$ 280; face 0,86x) <b>MAS régua blindado→Elite converteu 2 Elites = R$ 1.957</b>. Esteira completa: ~6,9x. 🚨 Frequência 2,1 em 2 dias + CTR 0,8 = público pequeno + criativo fraco → 2–3 criativos novos urgentes + ampliar público morno.</p>
+  </div>
+
+  <div class="rel-sec warn"><h3>6 · 🛡️ Blindado SEMSA — verba cortada em 50%</h3>
+    <p><b>R$ 308 · zero vendas</b> · régua 18 toques, 0 conversões. Concurso planejado p/ 2027 = urgência baixa por natureza. ✂️ Verba cortada R$ 120 → R$ 60/dia (08/09). Reativa com criativo "quem começa 1 ano antes passa na frente" (sem prometer edital iminente).</p>
+  </div>
+
+  <div class="rel-sec"><h3>➕ Testes [PERPÉTUO] — encerrados</h3>
+    <p>R$ 415 gastos: TJ gerou 5 leads; SEDUC-AM, SEDUC-PA e SEMSA geraram ZERO. Os 3 zerados foram pausados em 08/09 (economia ~R$ 75/dia → financia o remarketing TJ). Criativos de maior CTR viram variações nos blindados.</p>
+  </div>
+
+  <div class="note">Regras de leitura: ROAS sempre sobre contratos · matrícula de link compartilhado (UTM crua) fora do CAC da Meta · blindado se julga pela esteira (low-ticket + Elite da régua), nunca pela venda de face.</div>
+  </div>
+</div>
+
+</div><!-- /tab-trafego -->
 
 <footer>PLANO SETEMBRO/2026 · Grupo SOU — Sou Concurseiro e Vou Passar · painel interno · receita sempre líquida</footer>
 </div>
@@ -460,6 +557,53 @@ function renderCal(){
   }).join("");
 }
 renderCal();
+
+/* ================= ABAS + CHECKLIST (aba Tráfego) ================= */
+document.querySelectorAll(".page-tabs .ptab").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".page-tabs .ptab").forEach(x => x.classList.toggle("on", x === b));
+  document.getElementById("tab-painel").hidden = b.dataset.tab !== "painel";
+  document.getElementById("tab-trafego").hidden = b.dataset.tab !== "trafego";
+  if (b.dataset.tab === "trafego") loadChecklist();
+});
+
+async function ckFetch(method, body) {
+  const r = await fetch(API + "?k=" + encodeURIComponent(K) + "&resource=checklist", {
+    method,
+    headers: { Authorization: "Bearer " + ANON, apikey: ANON, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return r.json();
+}
+function renderChecklist(itens) {
+  const fmtD = t => t ? new Date(t).toLocaleString("pt-BR", { timeZone: "America/Manaus", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+  for (const grupo of ["fabio", "claude"]) {
+    const el = document.getElementById("ck-" + grupo);
+    const rows = itens.filter(i => i.grupo === grupo);
+    el.innerHTML = rows.map(i => `
+      <label class="ck ${i.feito ? "done" : ""}" data-id="${i.id}">
+        <input type="checkbox" ${i.feito ? "checked" : ""}>
+        <span><span class="ct">${i.texto}</span>
+        ${i.detalhe ? `<span class="cd">${i.detalhe}</span>` : ""}
+        ${i.feito && i.feito_at ? `<span class="when">✔ concluído ${fmtD(i.feito_at)}</span>` : ""}</span>
+      </label>`).join("") || '<p class="muted">nada pendente 🎉</p>';
+    el.querySelectorAll(".ck input").forEach(cb => cb.onchange = async (ev) => {
+      const id = ev.target.closest(".ck").dataset.id;
+      const d = await ckFetch("POST", { id, feito: ev.target.checked });
+      if (d.itens) renderChecklist(d.itens);
+    });
+  }
+}
+async function loadChecklist() {
+  try {
+    const d = await ckFetch("GET");
+    if (d.itens) renderChecklist(d.itens);
+    else throw new Error(d.error || "resposta vazia");
+  } catch (e) {
+    const msg = '<p class="muted">falha ao carregar o checklist: ' + e.message + (K ? "" : " — confira o token ?k= na URL") + "</p>";
+    document.getElementById("ck-fabio").innerHTML = msg;
+    document.getElementById("ck-claude").innerHTML = "";
+  }
+}
 
 /* ================= DADOS ================= */
 let RAW = null, verbaDia = "hoje";
