@@ -26,6 +26,11 @@ const CAMPANHAS_PLANO: { id: string; conta: string }[] = [
   { id: "120241274472180307", conta: "SPOTFABIO" },       // PP VSL 21/03
 ];
 
+// Contest code da plataforma SOU Webinário → chave canônica do painel.
+// O seducam foi criado com code "seduc_amazonas"; o front (e o bloco de compras
+// por UTM) usam SEDUC_AM — sem este alias o funil do SEDUC-AM não aparece.
+const CODE_ALIAS: Record<string, string> = { seduc_amazonas: "SEDUC_AM" };
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -241,13 +246,14 @@ Deno.serve(async (req: Request) => {
       vendasDia[d].n += 1;
     }
 
-    // ---- funil por concurso × dia (Manaus)
+    // ---- funil por concurso × dia (Manaus) — code normalizado via CODE_ALIAS
     const funilDia: Record<string, Record<string, { inscritos: number; sala: number; pitch: number; checkout: number }>> = {};
     for (const r of funil as {
       created_at: string; received_link: boolean; attended: boolean;
       reached_pitch: boolean; clicked_checkout: boolean; contests: { code: string } | null;
     }[]) {
-      const code = r.contests?.code ?? "?";
+      const raw = r.contests?.code ?? "?";
+      const code = CODE_ALIAS[raw] ?? raw;
       const d = diaManaus(r.created_at)!;
       const bucket = ((funilDia[code] ??= {})[d] ??= { inscritos: 0, sala: 0, pitch: 0, checkout: 0 });
       if (r.received_link) bucket.inscritos++;
@@ -323,7 +329,7 @@ Deno.serve(async (req: Request) => {
         { nome: "Conta Matriz", valor: 25000 },
       ],
       meta_spend: spend,       // linhas cruas diárias; o front classifica por frente
-      funil_dia: funilDia,     // por contest code (TJAM, SEDUC_PA, SEDUC_AM)
+      funil_dia: funilDia,     // por contest code canônico (TJAM, SEDUC_PA, SEDUC_AM)
       compras_web_dia: comprasDia,
       campanhas,               // análise por campanha/anúncio (Graph API, cache ~10 min)
     });

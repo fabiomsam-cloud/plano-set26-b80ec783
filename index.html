@@ -43,7 +43,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
 .grid{display:grid;gap:12px;margin-bottom:12px}
 .g-two{grid-template-columns:1.35fr 1fr}
-.g-fun{grid-template-columns:1fr 1fr 1fr}
+.g-fun{grid-template-columns:1fr 1fr}
 @media(max-width:1080px){.g-two,.g-fun{grid-template-columns:1fr}}
 
 /* ---------- countdown rail ---------- */
@@ -329,11 +329,11 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
 <div class="grid g-fun">
   <div class="card fcard" id="funil-tjam"></div>
   <div class="card fcard" id="funil-seducpa"></div>
+  <div class="card fcard" id="funil-seducam"></div>
   <div class="card fcard">
     <h3>Demais frentes <span class="tag-soon">INSTRUMENTAÇÃO A CAMINHO</span></h3>
     <div class="hint" style="margin:6px 0 14px">Entram no painel assim que cada funil nascer e for medido — sem números inventados.</div>
     <div class="soon">
-      <div class="si"><span class="sn">SEDUC-AM · Webinário</span><span class="ss">gravação 08/09 → plataforma → campanha</span></div>
       <div class="si"><span class="sn">Polícias AM · Webinário</span><span class="ss">insumos 08/09 · @deltafabiosilva</span></div>
       <div class="si"><span class="sn">PRF · Quiz + ingresso</span><span class="ss">página quiz + VSL 08/09</span></div>
       <div class="si"><span class="sn">Play Passei · Webinário</span><span class="ss">CAPI + ponte Vturb pendentes</span></div>
@@ -464,6 +464,8 @@ const CAMP_INFO = [
    obj:"Captação de cadastro p/ o webinário", pub:"[QUENTE] envolvimento AM + [FRIO] Advantage+ seed LAL1% alunos"},
   {id:"52663860728228",     t:"SEDUC-PA · Webinário (cadastro)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:4.5,stop:6.5}, diaria:180,
    obj:"Captação de cadastro p/ o webinário", pub:"[QUENTE] seguidores+pixel PA + [FRIO] SEDUC ADV+"},
+  {id:"52664345880028",     t:"SEDUC-AM · Webinário (cadastro)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:7,stop:12}, diaria:160,
+   obj:"Captação de cadastro p/ o webinário", pub:"[QUENTE] envolvimento AM R$ 100 + [FRIO] Advantage+ AM R$ 60 · no ar 07/09"},
   {id:"120256186603360492", t:"PRF · PV07 (ingresso 19,90)",  conta:"ON-LINE",   tipo:"purchase", faixa:{ok:55,stop:75}, diaria:null,
    obj:"Venda do ingresso — custo/ingresso ≤ 55", pub:"Advantage+ +30 Brasil · otimiza VALUE · transição p/ [PLANO][QUIZ][PRF] (VSL 08/09)"},
   {id:"120256234659840492", t:"PRF · PV11 (ingresso 19,90)",  conta:"ON-LINE",   tipo:"purchase", faixa:{ok:55,stop:75}, diaria:null,
@@ -480,7 +482,7 @@ const CAMP_INFO = [
 const BADGE_MIN_7D = 50; // regra dura: badge 🏆/🔻 só com gasto ≥ R$ 50 na janela de 7 dias
 
 // CPL faixas escalar/parar (janela 3–7d) — CPL medível hoje só p/ webinários instrumentados
-const CPL_FAIXA = { tjam:{ok:5,stop:8}, seducpa:{ok:4.5,stop:6.5} };
+const CPL_FAIXA = { tjam:{ok:5,stop:8}, seducpa:{ok:4.5,stop:6.5}, seducam:{ok:7,stop:12} };
 // Metas Fase 1 (encadeadas): sala/inscritos · pitch/sala · checkout/pitch · compra/checkout
 const METAS_FUNIL = { sala:.75, pitch:.45, checkout:.30, compra:.15 };
 
@@ -489,7 +491,8 @@ const CAL = [
   {de:"2026-09-05", ate:"2026-09-05", t:"Blindado no ar — TJ-AM, SEDUC-AM e SEMSA (R$ 120/dia cada)", d:"campanhas [PLANO][BLINDADO] ativas + UTM do checkout blindado", feito:true},
   {de:"2026-09-05", ate:"2026-09-05", t:"Pulsos 7h/19h → MARCOM agendados", d:"cobrança diária do calendário no WhatsApp", feito:true},
   {de:"2026-09-06", ate:"2026-09-08", t:"Construções: roteiros + gravações do Fábio", d:"mini VSL PRF · esqueleto Polícias · gravação SEDUC-AM", feito:false},
-  {de:"2026-09-08", ate:"2026-09-08", t:"SEDUC-AM, Polícias AM, PRF quiz e Play Passei NO AR", d:"4 frentes estreiam juntas — verba sobe p/ o teto completo", feito:false},
+  {de:"2026-09-07", ate:"2026-09-07", t:"Webinário SEDUC-AM NO AR", d:"plataforma publicada + [WEB][SEDUCAM][CADASTRO][ABO] ativa (R$ 160/dia) — estreou 1 dia antes do previsto", feito:true},
+  {de:"2026-09-08", ate:"2026-09-08", t:"Polícias AM, PRF quiz e Play Passei NO AR", d:"3 frentes restantes estreiam — verba sobe p/ o teto completo", feito:false},
   {de:"2026-09-08", ate:"2026-09-13", t:"Semana técnica: parcelamento + agentes + Fase 2", d:"flag webhook parcelamento · UTM Play Passei · 3 agentes de nutrição + grupos Sendflow · instrumentação Fase 2", feito:false},
   {de:"2026-09-14", ate:"2026-09-18", t:"Estude Comigo 1 — TJ-AM · SEDUC-AM · SEDUC-PA", d:"5 msgs/semana com ações de venda", feito:false},
   {de:"2026-09-21", ate:"2026-09-21", t:"LIVE CPL · TJ-AM", d:"conferir premissa de conversão 3% do funil completo em 22/09", feito:false},
@@ -773,6 +776,7 @@ function funilCard(elId, code, fid, nome){
 function renderFunis(){
   funilCard("funil-tjam", "TJAM", "tjam", "TJ-AM · Webinário");
   funilCard("funil-seducpa", "SEDUC_PA", "seducpa", "SEDUC-PA · Webinário");
+  funilCard("funil-seducam", "SEDUC_AM", "seducam", "SEDUC-AM · Webinário");
 }
 
 /* ---- 2b · campanhas ---- */
@@ -900,7 +904,7 @@ function renderAlertas(){
   if (gHoje.total > TETO_DIA)
     alerts.push({sev:"crit", t:"Teto de verba estourado HOJE (parcial)", v:fmtR2(gHoje.total) + " vs teto R$ 1.900"});
 
-  for (const [fid, code, nome] of [["tjam","TJAM","TJ-AM"],["seducpa","SEDUC_PA","SEDUC-PA"]]){
+  for (const [fid, code, nome] of [["tjam","TJAM","TJ-AM"],["seducpa","SEDUC_PA","SEDUC-PA"],["seducam","SEDUC_AM","SEDUC-AM"]]){
     const t = agregaFunil(code);
     const spend = spendFrenteJanela(fid, "2026-09-01", hoje);
     const cpl = t.inscritos > 0 ? spend/t.inscritos : null;
