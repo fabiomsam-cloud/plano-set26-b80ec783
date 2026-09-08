@@ -70,6 +70,8 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .tk.proj .v{color:var(--ink)}
 .badge-est{display:inline-block;background:rgba(57,135,229,.16);color:#7db2f0;border:1px dashed rgba(57,135,229,.5);
   font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;vertical-align:2px}
+.badge-med{display:inline-block;background:rgba(217,165,63,.16);color:var(--gold);border:1px solid rgba(217,165,63,.5);
+  font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;vertical-align:2px}
 .thermo{margin:6px 0 8px}
 .thermo .track{position:relative;height:34px;background:var(--surface-2);border-radius:10px;overflow:visible}
 .thermo .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#a87b23,var(--gold));border-radius:10px 0 0 10px;min-width:3px}
@@ -267,7 +269,7 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
 <div class="card" style="margin-bottom:12px">
   <div class="card-head">
     <div><h2>Termômetro da meta</h2>
-      <div class="hint">Receita <b style="color:var(--ink-2)">líquida</b> de setembro (faturas pagas na Hubla) + blocos ainda não instrumentados como <span class="badge-est">ESTIMADO</span></div>
+      <div class="hint">Receita <b style="color:var(--ink-2)">líquida</b> de setembro (faturas pagas na Hubla = vendas novas + recorrência <span class="badge-med">MEDIDO</span>) + blocos ainda não instrumentados como <span class="badge-est">ESTIMADO</span></div>
     </div>
   </div>
   <div class="thermo-kpis">
@@ -285,7 +287,7 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
   </div>
   <div class="est-list" id="est-list"></div>
   <div class="vday" id="vday"></div>
-  <div class="note">Barra dourada = medido (líquido, caixa por data de pagamento). Faixa azul tracejada = estimados do plano — o valor real vai substituindo conforme cada bloco for instrumentado.</div>
+  <div class="note">Barra dourada = medido (líquido, caixa por data de pagamento — vendas novas + recorrência, soma única). Faixa azul tracejada = estimados restantes do plano — o valor real vai substituindo conforme cada bloco for instrumentado (Recorrência já virou medida em 08/09).</div>
 </div>
 
 <div class="grid g-two">
@@ -661,6 +663,10 @@ function renderTermometro(){
   const vd = RAW.vendas_dia || {};
   const medido = Object.values(vd).reduce((a,x)=>a+x.net, 0);
   const nFat = Object.values(vd).reduce((a,x)=>a+x.n, 0);
+  // Recorrência MEDIDA (parcelas 2ª+): subconjunto de vendas_dia — decompõe, NUNCA soma de novo
+  const rd = RAW.recorrencia_dia || null;
+  const rec = rd ? Object.values(rd).reduce((a,x)=>a+x.net, 0) : null;
+  const recN = rd ? Object.values(rd).reduce((a,x)=>a+x.n, 0) : 0;
   const est = (RAW.estimados||[]).reduce((a,x)=>a+x.valor, 0);
   const proj = medido + est;
   const hoje = hojeManaus();
@@ -668,7 +674,9 @@ function renderTermometro(){
   const mesPct = diaN/30;
 
   $("t-medido").textContent = fmtK(medido);
-  $("t-medido-s").textContent = nFat.toLocaleString("pt-BR") + " faturas pagas · " + Math.round(medido/META*100) + "% da meta";
+  $("t-medido-s").textContent = rec != null
+    ? "novas " + fmtK(medido - rec) + " + recorrência " + fmtK(rec) + " · " + Math.round(medido/META*100) + "% da meta"
+    : nFat.toLocaleString("pt-BR") + " faturas pagas · " + Math.round(medido/META*100) + "% da meta";
   $("t-est").textContent = fmtK(est);
   $("t-proj").textContent = fmtK(proj);
   $("t-proj-s").textContent = Math.round(proj/META*100) + "% da meta de R$ 536k";
@@ -687,7 +695,10 @@ function renderTermometro(){
       `<div class="mark ${cls}" style="left:${x}%"></div><div class="mlab ${cls}" style="left:${x}%"><b>${l.split(" · ")[0]}</b> ${l.split(" · ")[1]}</div>`);
   }
 
-  $("est-list").innerHTML = (RAW.estimados||[]).map(e =>
+  const recRow = rec != null
+    ? `<div class="er"><span>Recorrência — ${recN.toLocaleString("pt-BR")} parcelas 2ª+ pagas no mês <span class="badge-med">MEDIDO</span> <span style="color:var(--muted)">· já dentro do medido</span></span><b>${fmtR(rec)}</b></div>`
+    : "";
+  $("est-list").innerHTML = recRow + (RAW.estimados||[]).map(e =>
     `<div class="er"><span>${esc(e.nome)} <span class="badge-est">ESTIMADO</span></span><b>${fmtR(e.valor)}</b></div>`).join("");
 
   const dias = Object.keys(vd).sort();

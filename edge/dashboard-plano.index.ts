@@ -191,9 +191,11 @@ Deno.serve(async (req: Request) => {
 
   try {
     const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm] = await Promise.all([
-      // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at
+      // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
+      // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
+      // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
       fetchAll((a, b) =>
-        db.from("hubla_invoices").select("paid_at, net_value")
+        db.from("hubla_invoices").select("paid_at, net_value, smart_installment_current, invoice_detail")
           .eq("status", "Paga").gte("paid_at", SET_INI_ISO)
           .order("paid_at").range(a, b)
       ),
@@ -236,14 +238,28 @@ Deno.serve(async (req: Request) => {
       ),
     ]);
 
-    // ---- vendas por dia (Manaus)
+    // ---- vendas por dia (Manaus) — total único + recorte da recorrência (parcelas 2ª+)
+    // vendas_dia segue sendo o TOTAL (inclui as parcelas); recorrencia_dia é um SUBCONJUNTO dele.
     const vendasDia: Record<string, { net: number; n: number }> = {};
-    for (const r of vendas as { paid_at: string; net_value: number | null }[]) {
+    const recorrenciaDia: Record<string, { net: number; n: number }> = {};
+    for (const r of vendas as {
+      paid_at: string; net_value: number | null;
+      smart_installment_current: number | null; invoice_detail: string | null;
+    }[]) {
       const d = diaManaus(r.paid_at);
       if (!d) continue;
+      const net = Number(r.net_value ?? 0);
       (vendasDia[d] ??= { net: 0, n: 0 });
-      vendasDia[d].net += Number(r.net_value ?? 0);
+      vendasDia[d].net += net;
       vendasDia[d].n += 1;
+      const isRecorrencia =
+        (r.smart_installment_current != null && Number(r.smart_installment_current) >= 2) ||
+        r.invoice_detail === "Pagamento de uma parcela";
+      if (isRecorrencia) {
+        (recorrenciaDia[d] ??= { net: 0, n: 0 });
+        recorrenciaDia[d].net += net;
+        recorrenciaDia[d].n += 1;
+      }
     }
 
     // ---- funil por concurso × dia (Manaus) — code normalizado via CODE_ALIAS
@@ -320,10 +336,11 @@ Deno.serve(async (req: Request) => {
 
     return json({
       generated_at: new Date().toISOString(),
-      vendas_dia: vendasDia,
-      // Blocos do plano ainda SEM instrumentação — projeções do Plano-Verba v29 (rótulo ESTIMADO no painel)
+      vendas_dia: vendasDia,          // TOTAL medido (já inclui as parcelas de recorrência)
+      recorrencia_dia: recorrenciaDia, // subconjunto de vendas_dia — parcelas 2ª+ (flag 08/09 + backfill)
+      // Blocos do plano ainda SEM instrumentação — projeções do Plano-Verba v29 (rótulo ESTIMADO no painel).
+      // Recorrência SAIU daqui em 08/09: virou MEDIDA (recorrencia_dia) — recolocá-la seria contar em dobro.
       estimados: [
-        { nome: "Recorrência", valor: 94000 },
         { nome: "Comercial humano + Anne", valor: 90000 },
         { nome: "Renovação / CS", valor: 30000 },
         { nome: "Conta Matriz", valor: 25000 },
