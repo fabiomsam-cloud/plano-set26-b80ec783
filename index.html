@@ -862,7 +862,10 @@ function renderCampanhas(){
     }
 
     let rows = "";
+    // anúncios sem entrega em nenhuma janela viram 1 linha (Fase 2 tem 30 anúncios — no celular vira rolagem infinita)
+    const semEntrega = c.ads.filter(a => a.j7.spend === 0 && a.mes.spend === 0).length;
     for (const ad of [...c.ads].sort((a,b)=>b.j7.spend - a.j7.spend)){
+      if (ad.j7.spend === 0 && ad.mes.spend === 0) continue;
       const hook = ad.j7.imp > 0 ? ad.j7.v3s / ad.j7.imp : null;
       const hold = ad.j7.v3s > 0 ? ad.j7.thru / ad.j7.v3s : null;
       const cv7 = convDoAd(ad, info.tipo, "j7");
@@ -923,6 +926,7 @@ function renderCampanhas(){
       <div class="tbl-wrap"><table>
         <tr><th>Anúncio (7d)</th><th>Gasto</th><th>CTR</th><th>Hook</th><th>Hold</th><th>${info.tipo==="lead"?"CPL":info.tipo==="video"?"R$/ThruPlay":"CPA"}</th><th>${info.tipo==="lead"?"Leads mês":info.tipo==="blindado"?"Vendas mês":info.tipo==="video"?"75% 7d (÷ThruPlay)":"Vendas px mês"}</th><th></th></tr>
         ${rows || `<tr><td colspan="8" style="text-align:left;color:var(--muted)">sem anúncios com entrega nas janelas</td></tr>`}
+        ${semEntrega && rows ? `<tr><td colspan="8" style="text-align:left;color:var(--muted)">+ ${semEntrega} anúncio(s) sem entrega ainda</td></tr>` : ""}
       </table></div>
       ${funilPos}${abx}
     </div>`;
