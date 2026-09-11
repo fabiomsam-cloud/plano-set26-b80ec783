@@ -829,7 +829,7 @@ function renderCampanhas(){
     aviso.innerHTML = "";
     return;
   }
-  aviso.innerHTML = `<div class="camp-aviso"><b>Leitura 10/09:</b> todas as campanhas do plano estão aqui (blindado · webinário · Fase 2 · Fase 3 · Play Passei).
+  aviso.innerHTML = (C.stale ? `<div class="camp-aviso"><b>Meta em rate limit:</b> mostrando a última leitura boa (${new Date(C.fetched_at).toLocaleString("pt-BR",{timeZone:"America/Manaus",hour:"2-digit",minute:"2-digit"})}) — atualiza sozinho em alguns minutos.</div>` : "") + `<div class="camp-aviso"><b>Leitura 10/09:</b> todas as campanhas do plano estão aqui (blindado · webinário · Fase 2 · Fase 3 · Play Passei).
     Fase 2 se julga por <b>custo/ThruPlay</b> e taxa de 75% (faixa provisória ≤0,10 / >0,25 — calibrar dia 12); Fase 3 por CPL do pixel
     (só lead qualificado dispara) e pelos cadastros do banco. Blindado: CPA só com a janela de 7 dias cheia; vendas do mês vêm da Hubla, não do pixel.
     Campanhas de PRF ingresso ficam listadas como ENCERRADAS para a leitura do mês.</div>`;

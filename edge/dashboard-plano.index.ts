@@ -121,15 +121,21 @@ async function graphGet(path: string, params: Record<string, string>, token: str
 
 async function fetchCampanhasMeta(token: string): Promise<CampMeta[]> {
   const hoje = hojeManaus();
-  const mesRange = JSON.stringify({ since: "2026-09-01", until: hoje });
+  const d7ini = new Date(Date.parse(hoje) - 7 * 86400_000).toISOString().slice(0, 10);
+  const d7fim = new Date(Date.parse(hoje) - 1 * 86400_000).toISOString().slice(0, 10);
+  // Uma chamada de insights com DOIS intervalos (7 dias fechados + mês): a Graph devolve uma linha por
+  // anúncio × intervalo (date_start distingue). Metade das chamadas → menos rate limit (code 4/17).
+  const ranges = JSON.stringify([{ since: d7ini, until: d7fim }, { since: "2026-09-01", until: hoje }]);
   const one = async (c: { id: string; conta: string }): Promise<CampMeta> => {
-    const [meta, ins7, insMes] = await Promise.all([
+    const [meta, ins] = await Promise.all([
       graphGet(c.id, {
         fields: "name,effective_status,daily_budget,adsets.limit(30){id,name,effective_status,daily_budget,optimization_goal}",
       }, token),
-      graphGet(`${c.id}/insights`, { level: "ad", date_preset: "last_7d", fields: INSIGHT_FIELDS, limit: "100" }, token),
-      graphGet(`${c.id}/insights`, { level: "ad", time_range: mesRange, fields: INSIGHT_FIELDS, limit: "100" }, token),
+      graphGet(`${c.id}/insights`, { level: "ad", time_ranges: ranges, fields: INSIGHT_FIELDS + ",date_start", limit: "200" }, token),
     ]);
+    const rows = (ins.data ?? []) as Record<string, unknown>[];
+    const insMes = { data: rows.filter((r) => r.date_start === "2026-09-01") };
+    const ins7 = { data: rows.filter((r) => r.date_start === d7ini) };
     const ads: Record<string, AdRow> = {};
     for (const r of (insMes.data ?? []) as Record<string, unknown>[]) {
       ads[r.ad_id as string] = {
@@ -170,7 +176,8 @@ async function fetchCampanhasMeta(token: string): Promise<CampMeta[]> {
 
 // Cache simples em memória da instância (só a parte Meta) — o painel refresha a cada 5 min
 let META_CACHE: { t: number; data: CampMeta[] } | null = null;
-const META_TTL_MS = 10 * 60_000;
+const META_TTL_MS = 15 * 60_000;
+let META_STALE = ""; // último erro da Graph quando o cache antigo foi mantido
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -329,8 +336,14 @@ Deno.serve(async (req: Request) => {
       try {
         let cached = true;
         if (!META_CACHE || Date.now() - META_CACHE.t > META_TTL_MS) {
-          META_CACHE = { t: Date.now(), data: await fetchCampanhasMeta(metaToken) };
-          cached = false;
+          try {
+            META_CACHE = { t: Date.now(), data: await fetchCampanhasMeta(metaToken) };
+            cached = false; META_STALE = "";
+          } catch (e) {
+            if (!META_CACHE) throw e;          // sem cache nenhum: o bloco mostra o erro
+            META_STALE = String(e);             // com cache: segura o anterior e avisa
+            META_CACHE.t = Date.now() - META_TTL_MS + 3 * 60_000; // tenta de novo em 3 min
+          }
         }
         type FormRow = { event_time: string; utm_campaign: string | null; utm_content: string | null };
         type VendaRow = { paid_at: string; net_value: number | null; utm_campaign: string | null; utm_content: string | null };
@@ -368,7 +381,7 @@ Deno.serve(async (req: Request) => {
             vendas_net_mes: vCamp.reduce((s, v) => s + Number(v.net_value ?? 0), 0),
           };
         });
-        campanhas = { ok: true, cached, fetched_at: new Date(META_CACHE.t).toISOString(), items };
+        campanhas = { ok: true, cached, stale: META_STALE || null, fetched_at: new Date(META_CACHE.t).toISOString(), items };
       } catch (e) {
         campanhas = { ok: false, error: String(e) };
       }
