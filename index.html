@@ -427,7 +427,7 @@ const FRENTES = [
   {id:"seducpa",   nome:"SEDUC-PA",    diaria:325, det:"web 145 (v33) + Fase 2 120 + Fase 3 60"},
   {id:"policias",  nome:"Polícias AM", diaria:330, det:"Fase 2 330 até a Fase 3 entrar (16/09) — v33: 150"},
   {id:"prf",       nome:"PRF",         diaria:200, det:"sem ingresso · Fase 2 200 → 16/09: Fase 2 120 + Fase 3 80"},
-  {id:"blindado",  nome:"Blindado",    diaria:240, det:"SEDUC-AM 120 + SEMSA 120 (TJ pausado 11/09) · v33: 290"},
+  {id:"blindado",  nome:"Blindado",    diaria:0,   det:"PAUSADO 11/09 nas 3 frentes (decisão do Fábio) · v33: 290"},
   {id:"playpassei",nome:"Play Passei", diaria:136, det:"nossa metade (v33) · conta roda ~210"},
 ];
 // ordem importa: PP antes de PRF (campanhas [PP][...][PRF]); SEMSA cai no blindado
@@ -449,10 +449,10 @@ const CAMP_INFO = [
   // ---- venda direta blindada (v33: R$ 290 p/ os 3; decisão 10/09: manter 120/120/60)
   {id:"52664037551228",     t:"TJ-AM · Blindado — PAUSADA 11/09",  conta:"TRIBUNAIS", tipo:"blindado", faixa:{ok:150,stop:350}, diaria:null,
    obj:"Pausada 11/09 (OK do Fábio): 7 dias, 2 formulários, 0 venda com UTM; canibalizava o quente do webinário", pub:"Verba (R$ 120) foi p/ SEMSA · WhatsApp-Anne já pausado 10/09"},
-  {id:"120256238530960492", t:"SEDUC-AM · Blindado",          conta:"ON-LINE",   tipo:"blindado", faixa:{ok:110,stop:250}, diaria:120,
-   obj:"Venda direta blindada", pub:"Morno-quente · 11/09: ad03 estático PAUSADO por 3 dias (freq 3,4 · CTR 0,93) p/ os 4 hooks vd03–vd06 entregarem · rejulgar 14/09"},
-  {id:"120256238532240492", t:"SEMSA · Blindado",             conta:"ON-LINE",   tipo:"blindado", faixa:{ok:110,stop:250}, diaria:120,
-   obj:"Venda direta blindada", pub:"Morno-quente · 11/09: volta a R$ 120 (verba do TJ) — melhor taxa de formulário (5%) e 1 won pela Anne · concurso planejado p/ 2027 — copy nunca diz iminente"},
+  {id:"120256238530960492", t:"SEDUC-AM · Blindado — PAUSADA 11/09", conta:"ON-LINE", tipo:"blindado", faixa:{ok:110,stop:250}, diaria:null,
+   obj:"Pausada 11/09 (decisão do Fábio): 7 dias, 4 formulários pagos, 0 venda com UTM", pub:"Fica p/ leitura do mês"},
+  {id:"120256238532240492", t:"SEMSA · Blindado — PAUSADA 11/09",   conta:"ON-LINE", tipo:"blindado", faixa:{ok:110,stop:250}, diaria:null,
+   obj:"Pausada 11/09 (decisão do Fábio): 12 formulários pagos em 7 dias, 1 won pela Anne, 0 venda com UTM", pub:"Fica p/ leitura do mês"},
   // ---- webinários (Fase 1) — diárias v33
   {id:"52663791462228",     t:"TJ-AM · Webinário (cadastro)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:5,stop:8}, diaria:380,
    obj:"Captação de cadastro p/ o webinário", pub:"[QUENTE] envolvimento AM + [FRIO] Advantage+ · v33: R$ 380 (CPL 3,00 · ROAS 5,3×)"},
@@ -747,12 +747,12 @@ function renderVerba(){
   let h = "";
   for (const f of FRENTES){
     const g = por[f.id] || 0;
-    const r = g / f.diaria;
+    const r = f.diaria > 0 ? g / f.diaria : (g > 0 ? 9 : 0);
     const cls = r > 1.1 ? "over" : r > 0.92 ? "near" : "";
     h += `<div class="vrow"><div class="name">${esc(f.nome)}<small>diária R$ ${f.diaria}${f.det?" · "+esc(f.det):""}</small></div>
       <div class="track"><div class="fill ${cls}" style="width:${Math.min(g/maxScale*100,100)}%"></div>
         <div class="cap" style="left:${Math.min(f.diaria/maxScale*100,100)}%"></div></div>
-      <div class="num"><b>${fmtR2(g)}</b>${Math.round(r*100)}% da diária</div></div>`;
+      <div class="num"><b>${fmtR2(g)}</b>${f.diaria > 0 ? Math.round(r*100)+"% da diária" : (g > 0 ? "gasto com frente pausada" : "pausado")}</div></div>`;
   }
   const outras = por["outras"] || 0;
   if (outras > 0.5){
