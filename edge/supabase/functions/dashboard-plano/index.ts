@@ -233,7 +233,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -288,7 +288,49 @@ Deno.serve(async (req: Request) => {
           .eq("event_type", "estude_comigo_lead").gte("event_time", SET_INI_ISO)
           .order("event_time").range(a, b)
       ),
+      // (7) Leads do link da bio @deltafabiosilva (edge bio-lead → bio_leads) — insumo das Fases 2/3 de Polícias/PRF
+      fetchAll((a, b) =>
+        db.from("bio_leads")
+          .select("created_at, phone_norm, produto_code, destino, respostas, utm_medium, utm_content")
+          .gte("created_at", SET_INI_ISO)
+          .order("created_at").range(a, b)
+      ),
+      // (7b) Matrículas atribuídas à bio (mesmo telefone, depois do lead, produto recomendado)
+      fetchAll((a, b) =>
+        db.from("vw_bio_matriculas")
+          .select("paid_at, net_value, produto_code, utm_content")
+          .gte("paid_at", SET_INI_ISO)
+          .order("paid_at").range(a, b)
+      ),
     ]);
+
+    // ---- BIO: leads por dia × frente (PRF = farda PRF/indeciso; POLICIAS = PF/PC/PM)
+    type BioRow = { created_at: string; phone_norm: string | null; produto_code: string; destino: string; respostas: Record<string, string> | null; utm_medium: string | null; utm_content: string | null };
+    const bioFrente = (r: BioRow) => {
+      const f = String(r.respostas?.farda ?? "").toUpperCase();
+      return f === "PF" || f === "PC" || f === "PM" ? "POLICIAS" : "PRF";
+    };
+    const bio = {
+      total: (bioLeads as BioRow[]).length,
+      unicos: new Set((bioLeads as BioRow[]).map((r) => r.phone_norm).filter(Boolean)).size,
+      por_frente: {} as Record<string, number>,
+      por_produto: {} as Record<string, number>,
+      por_escolaridade: {} as Record<string, number>,
+      por_dia: {} as Record<string, Record<string, number>>,
+      por_origem: {} as Record<string, number>,
+      matriculas: (bioMats as { net_value: number | null }[]).length,
+      matriculas_net: (bioMats as { net_value: number | null }[]).reduce((s, m) => s + Number(m.net_value ?? 0), 0),
+    };
+    for (const r of bioLeads as BioRow[]) {
+      const fr = bioFrente(r), d = diaManaus(r.created_at) ?? "?";
+      bio.por_frente[fr] = (bio.por_frente[fr] ?? 0) + 1;
+      bio.por_produto[r.produto_code] = (bio.por_produto[r.produto_code] ?? 0) + 1;
+      const escol = String(r.respostas?.escolaridade ?? "?");
+      bio.por_escolaridade[escol] = (bio.por_escolaridade[escol] ?? 0) + 1;
+      ((bio.por_dia[d] ??= {}))[fr] = (bio.por_dia[d][fr] ?? 0) + 1;
+      const org = (r.utm_medium ?? "?") + (r.utm_content ? " · " + r.utm_content : "");
+      bio.por_origem[org] = (bio.por_origem[org] ?? 0) + 1;
+    }
 
     // ---- vendas por dia (Manaus) — total único + recorte da recorrência (parcelas 2ª+)
     // vendas_dia segue sendo o TOTAL (inclui as parcelas); recorrencia_dia é um SUBCONJUNTO dele.
@@ -431,6 +473,7 @@ Deno.serve(async (req: Request) => {
       funil_dia: funilDia,     // por contest code canônico (TJAM, SEDUC_PA, SEDUC_AM)
       compras_web_dia: comprasDia,
       campanhas,               // análise por campanha/anúncio (Graph API, cache ~10 min)
+      bio,                     // leads do link da bio @deltafabiosilva (insumo Fase 2/3 Polícias/PRF)
     });
   } catch (e) {
     return json({ error: String(e) }, 500);

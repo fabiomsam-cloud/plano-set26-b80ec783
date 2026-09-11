@@ -381,6 +381,16 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
     </div>
   </div></div>
 
+<!-- ============ 3b · LEADS DA BIO @deltafabiosilva ============ -->
+<div class="card" style="margin-bottom:12px" id="bio-card">
+  <div class="card-head">
+    <div><h2>🔗 Leads do link da bio · @deltafabiosilva</h2>
+      <div class="hint">Anne concierge na bio → WhatsApp capturado no Data Core (bio_leads) · frente = farda escolhida no quiz · insumo dos públicos das Fases 2 e 3 de Polícias AM e PRF</div>
+    </div>
+  </div>
+  <div id="bio-body"></div>
+</div>
+
 <!-- ============ 4 · CALENDÁRIO ============ -->
 <div class="card" style="margin-bottom:12px">
   <div class="card-head">
@@ -863,6 +873,34 @@ function renderFunis(){
   funilCard("funil-tjam", "TJAM", "tjam", "TJ-AM · Webinário");
   funilCard("funil-seducpa", "SEDUC_PA", "seducpa", "SEDUC-PA · Webinário");
   funilCard("funil-seducam", "SEDUC_AM", "seducam", "SEDUC-AM · Webinário");
+  renderBio();
+}
+
+/* ---- 3b · leads da bio @deltafabiosilva ---- */
+const BIO_NOMES = {elite_prf:"Elite PRF", elite_prf_adm:"Elite PRF ADM", playpassei:"Play Passei", souquestoes:"Sou Questões (grátis)"};
+function renderBio(){
+  const B = RAW.bio, box = $("bio-body");
+  if (!box) return;
+  if (!B){ box.innerHTML = `<div class="hint">Sem dados da bio no momento.</div>`; return; }
+  const hoje = hojeManaus();
+  const dias = Object.keys(B.por_dia||{}).sort();
+  const soma = o => Object.values(o||{}).reduce((a,b)=>a+b,0);
+  const chip = (l,v,cor) => `<div style="background:#f1f5f9;border-radius:10px;padding:8px 14px;min-width:110px"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em">${l}</div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:${cor||'var(--ink)'};margin-top:2px">${typeof v==="number"?v.toLocaleString("pt-BR"):v}</div></div>`;
+  const pills = [chip("Leads no mês",B.total), chip("Hoje",soma(B.por_dia?.[hoje])), chip("Frente PRF",B.por_frente?.PRF||0,'var(--blue)'),
+    chip("Frente Polícias",B.por_frente?.POLICIAS||0,'var(--blue)'), chip("Ensino superior",B.por_escolaridade?.SUPERIOR||0),
+    chip("Matrículas",B.matriculas||0,(B.matriculas||0)>0?'var(--green)':undefined), chip("Líquido",fmtR(B.matriculas_net||0),'var(--green)')].join("");
+  const max = Math.max(1, ...dias.map(d=>soma(B.por_dia[d])));
+  const serie = dias.map(d=>{const n=soma(B.por_dia[d]);
+    return `<div title="${d}: ${n}" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:60px"><div style="height:${Math.max(3,n/max*54)}px;background:var(--amber);border-radius:3px 3px 0 0;opacity:.85"></div><div style="font-size:9px;color:var(--muted);text-align:center;margin-top:2px">${d.slice(8)}</div></div>`;}).join("");
+  const tab = (obj, nomes) => `<table style="width:100%;border-collapse:collapse;font-size:12.5px">${Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>`<tr><td style="padding:4px 0;border-bottom:1px solid var(--ring)">${esc(nomes?.[k]||k)}</td><td style="text-align:right;padding:4px 0;border-bottom:1px solid var(--ring);font-variant-numeric:tabular-nums"><b>${v}</b></td></tr>`).join("")||'<tr><td class="hint">—</td></tr>'}</table>`;
+  box.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${pills}</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;align-items:start">
+      <div><div class="hint" style="margin-bottom:6px">Leads por dia (Manaus)</div><div style="display:flex;gap:3px;align-items:flex-end">${serie||'<span class="hint">ainda sem leads em setembro</span>'}</div></div>
+      <div><div class="hint" style="margin-bottom:6px">Produto recomendado</div>${tab(B.por_produto, BIO_NOMES)}</div>
+      <div><div class="hint" style="margin-bottom:6px">Origem (medium · Reel)</div>${tab(B.por_origem)}</div>
+    </div>
+    <div class="hint" style="margin-top:12px">Públicos Meta (conta ON-LINE) sincronizados a cada 6h a partir destes leads: <b>[BIO][DELTA] todos</b> · <b>[BIO][PRF]</b> (farda PRF/indeciso) · <b>[BIO][POLICIAS]</b> (PF/PC/PM). Usar nas Fases 2/3 é decisão do Fábio — o painel só informa. Matrícula = fatura Hubla do mesmo telefone, depois do lead, no produto recomendado.</div>`;
 }
 
 /* ---- 2b · campanhas ---- */
