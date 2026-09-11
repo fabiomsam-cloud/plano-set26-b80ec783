@@ -264,8 +264,10 @@ Deno.serve(async (req: Request) => {
       // (6) Cadastros do Estude Comigo (páginas do gerador v2, Fase 3) — só lead QUALIFICADO gera o evento
       fetchAll((a, b) =>
         db.from("campaign_events")
-          .select("event_time, utm_campaign, utm_term")
+          .select("event_time, utm_campaign, utm_term, qualified:raw_payload->>qualified")
           .eq("event_type", "estude_comigo_lead").gte("event_time", SET_INI_ISO)
+          // o evento é gravado p/ TODO cadastro; só o qualificado recebe link do grupo e dispara o Lead (CAPI)
+          .eq("raw_payload->>qualified", "true")
           .order("event_time").range(a, b)
       ),
     ]);
