@@ -427,7 +427,7 @@ const FRENTES = [
   {id:"seducpa",   nome:"SEDUC-PA",    diaria:325, det:"web 145 (v33) + Fase 2 120 + Fase 3 60"},
   {id:"policias",  nome:"Polícias AM", diaria:330, det:"Fase 2 330 até a Fase 3 entrar (16/09) — v33: 150"},
   {id:"prf",       nome:"PRF",         diaria:200, det:"sem ingresso · Fase 2 200 → 16/09: Fase 2 120 + Fase 3 80"},
-  {id:"blindado",  nome:"Blindado",    diaria:300, det:"TJ 120 + SEDUC-AM 120 + SEMSA 60 (v33: 290)"},
+  {id:"blindado",  nome:"Blindado",    diaria:240, det:"SEDUC-AM 120 + SEMSA 120 (TJ pausado 11/09) · v33: 290"},
   {id:"playpassei",nome:"Play Passei", diaria:136, det:"nossa metade (v33) · conta roda ~210"},
 ];
 // ordem importa: PP antes de PRF (campanhas [PP][...][PRF]); SEMSA cai no blindado
@@ -447,12 +447,12 @@ function classificar(nome){
 // tipo: "blindado" (CPA por venda Hubla + funil pós-clique) · "lead" (CPL pixel) · "purchase" (CPA pixel)
 const CAMP_INFO = [
   // ---- venda direta blindada (v33: R$ 290 p/ os 3; decisão 10/09: manter 120/120/60)
-  {id:"52664037551228",     t:"TJ-AM · Blindado",             conta:"TRIBUNAIS", tipo:"blindado", faixa:{ok:150,stop:350}, diaria:120,
-   obj:"Venda direta blindada — só site", pub:"Morno-quente · A/B encerrado 10/09: WhatsApp-Anne pausado (1.099 cliques → 3 conversas); site segue com R$ 120"},
+  {id:"52664037551228",     t:"TJ-AM · Blindado — PAUSADA 11/09",  conta:"TRIBUNAIS", tipo:"blindado", faixa:{ok:150,stop:350}, diaria:null,
+   obj:"Pausada 11/09 (OK do Fábio): 7 dias, 2 formulários, 0 venda com UTM; canibalizava o quente do webinário", pub:"Verba (R$ 120) foi p/ SEMSA · WhatsApp-Anne já pausado 10/09"},
   {id:"120256238530960492", t:"SEDUC-AM · Blindado",          conta:"ON-LINE",   tipo:"blindado", faixa:{ok:110,stop:250}, diaria:120,
-   obj:"Venda direta blindada", pub:"Morno-quente · VD02 aniversário + AD03 estático · 4 hooks novos editados 10/09 (aguardando validação)"},
-  {id:"120256238532240492", t:"SEMSA · Blindado",             conta:"ON-LINE",   tipo:"blindado", faixa:{ok:110,stop:250}, diaria:60,
-   obj:"Venda direta blindada", pub:"Morno-quente · verba cortada 50% em 08/09 · concurso planejado p/ 2027 — copy nunca diz iminente"},
+   obj:"Venda direta blindada", pub:"Morno-quente · 11/09: ad03 estático PAUSADO por 3 dias (freq 3,4 · CTR 0,93) p/ os 4 hooks vd03–vd06 entregarem · rejulgar 14/09"},
+  {id:"120256238532240492", t:"SEMSA · Blindado",             conta:"ON-LINE",   tipo:"blindado", faixa:{ok:110,stop:250}, diaria:120,
+   obj:"Venda direta blindada", pub:"Morno-quente · 11/09: volta a R$ 120 (verba do TJ) — melhor taxa de formulário (5%) e 1 won pela Anne · concurso planejado p/ 2027 — copy nunca diz iminente"},
   // ---- webinários (Fase 1) — diárias v33
   {id:"52663791462228",     t:"TJ-AM · Webinário (cadastro)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:5,stop:8}, diaria:380,
    obj:"Captação de cadastro p/ o webinário", pub:"[QUENTE] envolvimento AM + [FRIO] Advantage+ · v33: R$ 380 (CPL 3,00 · ROAS 5,3×)"},
@@ -828,7 +828,7 @@ function convDoAd(ad, tipo, win){          // conversão-chave por frente
   if (tipo === "lead") return ad[win].px_lead;
   if (tipo === "purchase") return ad[win].px_purchase;
   if (tipo === "video") return ad[win].thru;          // Fase 2: ThruPlay é a conversão
-  return win === "mes" ? ad.vendas_mes : ad.j7.px_purchase; // blindado: venda Hubla no mês; 7d cai no pixel
+  return win === "mes" ? ad.vendas_mes : (ad.forms_mes||0); // blindado: venda Hubla c/ UTM no mês; ranking 7d pelo formulário do popup (pixel Purchase ignorado — 11/09: parcelas poluíam)
 }
 function faixaCls(v, fx){ return v==null||!fx ? "" : v <= fx.ok ? "ok" : v <= fx.stop ? "mid" : "bad"; }
 function fmtCusto(v){ return v==null ? "—" : "R$ " + v.toLocaleString("pt-BR",{maximumFractionDigits:2}); }
@@ -843,7 +843,7 @@ function renderCampanhas(){
   }
   aviso.innerHTML = (C.stale ? `<div class="camp-aviso"><b>Meta em rate limit:</b> mostrando a última leitura boa (${new Date(C.fetched_at).toLocaleString("pt-BR",{timeZone:"America/Manaus",hour:"2-digit",minute:"2-digit"})}) — atualiza sozinho em alguns minutos.</div>` : "") + `<div class="camp-aviso"><b>Leitura 10/09:</b> todas as campanhas do plano estão aqui (blindado · webinário · Fase 2 · Fase 3 · Play Passei).
     Fase 2 se julga por <b>custo/ThruPlay</b> e taxa de 75% (faixa provisória ≤0,10 / >0,25 — calibrar dia 12); Fase 3 por CPL do pixel
-    (só lead qualificado dispara) e pelos cadastros do banco. Blindado: CPA só com a janela de 7 dias cheia; vendas do mês vêm da Hubla, não do pixel.
+    (só lead qualificado dispara) e pelos cadastros do banco. Blindado: julgado por formulário do popup e venda com UTM da campanha (banco) — o Purchase do pixel foi ignorado desde 11/09 (o CAPI mandava parcelas de alunos como compra; corrigido).
     Campanhas de PRF ingresso ficam listadas como ENCERRADAS para a leitura do mês.</div>`;
 
   const byId = {}; for (const it of C.items) byId[it.id] = it;
@@ -859,13 +859,14 @@ function renderCampanhas(){
     }
     const cap = info.diaria ?? c.orcamento_dia;
     const kpiMes = totM.conv > 0 ? totM.spend / totM.conv : null;
+    const custoForm = info.tipo === "blindado" && c.forms_mes > 0 ? totM.spend / c.forms_mes : null;
     const kpiLbl = info.tipo === "lead" ? "CPL mês" : info.tipo === "blindado" ? "CPA/venda mês" : info.tipo === "video" ? "Custo/ThruPlay mês" : "CPA mês";
     const p75M = c.ads.reduce((a,ad)=>a+(ad.mes.p75||0),0), p75_7 = c.ads.reduce((a,ad)=>a+(ad.j7.p75||0),0);
     const kcls = faixaCls(kpiMes, info.faixa);
 
     // ranking p/ badge — REGRA DURA: só anúncios com gasto ≥ R$ 50 nos 7d
     const eleg = c.ads.filter(a => a.j7.spend >= BADGE_MIN_7D);
-    const score = a => { const cv = convDoAd(a, info.tipo, "j7"); return cv > 0 ? cv / a.j7.spend * 1000 : Number(a.j7.ctr)/100; };
+    const score = a => { if (info.tipo === "blindado") return (a.forms_mes||0) > 0 && a.mes.spend > 0 ? a.forms_mes / a.mes.spend * 1000 : Number(a.j7.ctr)/100; const cv = convDoAd(a, info.tipo, "j7"); return cv > 0 ? cv / a.j7.spend * 1000 : Number(a.j7.ctr)/100; };
     let best = null, worst = null;
     if (eleg.length >= 2){
       const ord = [...eleg].sort((a,b) => score(b) - score(a));
@@ -881,7 +882,7 @@ function renderCampanhas(){
       const hook = ad.j7.imp > 0 ? ad.j7.v3s / ad.j7.imp : null;
       const hold = ad.j7.v3s > 0 ? ad.j7.thru / ad.j7.v3s : null;
       const cv7 = convDoAd(ad, info.tipo, "j7");
-      const custo7 = cv7 > 0 ? ad.j7.spend / cv7 : null;
+      const custo7 = info.tipo === "blindado" ? ((ad.forms_mes||0) > 0 ? ad.mes.spend / ad.forms_mes : null) : (cv7 > 0 ? ad.j7.spend / cv7 : null);
       const badge = ad.j7.spend < BADGE_MIN_7D ? `<span class="bdg col">coletando dados</span>`
         : ad.id === best ? `<span class="bdg win">🏆 campeão</span>`
         : ad.id === worst ? `<span class="bdg lose">🔻 pior</span>` : "";
@@ -891,7 +892,7 @@ function renderCampanhas(){
         <td>${hook==null?"—":Math.round(hook*100)+"%"}</td>
         <td>${hold==null?"—":Math.round(hold*100)+"%"}</td>
         <td class="pc ${faixaCls(custo7, info.faixa)}">${fmtCusto(custo7)}</td>
-        <td>${info.tipo==="blindado" ? ad.vendas_mes : info.tipo==="video" ? `${(ad.j7.p75||0).toLocaleString("pt-BR")} <small style="color:var(--muted)">(${ad.j7.thru>0?Math.round((ad.j7.p75||0)/ad.j7.thru*100)+"%":"—"})</small>` : convDoAd(ad, info.tipo, "mes").toLocaleString("pt-BR")}</td>
+        <td>${info.tipo==="blindado" ? `${ad.forms_mes||0} <small style="color:var(--muted)">form</small> · ${ad.vendas_mes} <small style="color:var(--muted)">venda</small>` : info.tipo==="video" ? `${(ad.j7.p75||0).toLocaleString("pt-BR")} <small style="color:var(--muted)">(${ad.j7.thru>0?Math.round((ad.j7.p75||0)/ad.j7.thru*100)+"%":"—"})</small>` : convDoAd(ad, info.tipo, "mes").toLocaleString("pt-BR")}</td>
         <td>${badge}</td></tr>`;
     }
 
@@ -931,12 +932,13 @@ function renderCampanhas(){
         <div class="kp">Gasto 7 dias<b>${fmtR2(tot7.spend)}</b></div>
         <div class="kp">Orçamento/dia${cap!=null?` <span style="opacity:.7">(${info.diaria!=null?"plano":"Meta"})</span>`:""}<b>${cap!=null?fmtR(cap):"—"}</b></div>
         <div class="kp ${kcls}">${kpiLbl} <span style="opacity:.7">(faixa ≤${info.faixa.ok}/${info.faixa.stop})</span><b>${fmtCusto(kpiMes)}</b></div>
-        <div class="kp">${info.tipo==="lead"?"Leads mês (pixel)":info.tipo==="video"?"ThruPlays mês":"Conversões mês"}<b>${totM.conv.toLocaleString("pt-BR")}</b></div>
+        <div class="kp">${info.tipo==="lead"?"Leads mês (pixel)":info.tipo==="video"?"ThruPlays mês":info.tipo==="blindado"?"Vendas c/ UTM mês":"Conversões mês"}<b>${totM.conv.toLocaleString("pt-BR")}</b></div>
+        ${info.tipo==="blindado"?`<div class="kp">Formulários mês · R$/form<b>${c.forms_mes} · ${fmtCusto(custoForm)}</b></div>`:""}
         ${info.tipo==="video"?`<div class="kp">Assistiu 75% mês <span style="opacity:.7">(7d: ${p75_7.toLocaleString("pt-BR")})</span><b>${p75M.toLocaleString("pt-BR")}</b></div>`:""}
         ${info.ec!=null&&c.leads_ec_mes!=null?`<div class="kp">Cadastros no banco <span style="opacity:.7">(qualificados)</span><b>${c.leads_ec_mes.toLocaleString("pt-BR")}</b></div>`:""}
       </div>
       <div class="tbl-wrap"><table>
-        <tr><th>Anúncio (7d)</th><th>Gasto</th><th>CTR</th><th>Hook</th><th>Hold</th><th>${info.tipo==="lead"?"CPL":info.tipo==="video"?"R$/ThruPlay":"CPA"}</th><th>${info.tipo==="lead"?"Leads mês":info.tipo==="blindado"?"Vendas mês":info.tipo==="video"?"75% 7d (÷ThruPlay)":"Vendas px mês"}</th><th></th></tr>
+        <tr><th>Anúncio (7d)</th><th>Gasto</th><th>CTR</th><th>Hook</th><th>Hold</th><th>${info.tipo==="lead"?"CPL":info.tipo==="video"?"R$/ThruPlay":info.tipo==="blindado"?"R$/form (mês)":"CPA"}</th><th>${info.tipo==="lead"?"Leads mês":info.tipo==="blindado"?"Form · vendas UTM (mês)":info.tipo==="video"?"75% 7d (÷ThruPlay)":"Vendas px mês"}</th><th></th></tr>
         ${rows || `<tr><td colspan="8" style="text-align:left;color:var(--muted)">sem anúncios com entrega nas janelas</td></tr>`}
         ${semEntrega && rows ? `<tr><td colspan="8" style="text-align:left;color:var(--muted)">+ ${semEntrega} anúncio(s) sem entrega ainda</td></tr>` : ""}
       </table></div>
