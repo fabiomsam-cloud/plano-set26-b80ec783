@@ -667,6 +667,18 @@ function spendFrenteJanela(fid, deISO, ateISO){
   }
   return s;
 }
+// CPL do webinário = só a campanha de CADASTRO ([WEB]) ÷ cadastros REAIS da plataforma.
+// Fase 2/3 da mesma frente ficam fora do CPL (11/09: o Lead da Meta conta 1,4–1,7× o cadastro real).
+function spendWebJanela(fid, deISO, ateISO){
+  let s = 0;
+  for (const r of (RAW.meta_spend||[])){
+    if (r.period_start < deISO || r.period_start > ateISO) continue;
+    const n = (r.campaign_name||"").toUpperCase();
+    if (!/\[WEB\]|CADASTRO/.test(n) || /FASE2|FASE3|BLINDADO/.test(n)) continue;
+    if (classificar(r.campaign_name) === fid) s += Number(r.spend||0);
+  }
+  return s;
+}
 
 /* ================= RENDER ================= */
 function renderAll(){
@@ -773,7 +785,7 @@ function agregaFunil(code){
 }
 function funilCard(elId, code, fid, nome){
   const t = agregaFunil(code);
-  const spendMes = spendFrenteJanela(fid, "2026-09-01", hojeManaus());
+  const spendMes = spendWebJanela(fid, "2026-09-01", hojeManaus());
   const cpl = t.inscritos > 0 ? spendMes / t.inscritos : null;
   const fx = CPL_FAIXA[fid];
   const cplCls = cpl==null||!fx ? "" : cpl <= fx.ok ? "ok" : cpl <= fx.stop ? "mid" : "bad";
@@ -799,11 +811,11 @@ function funilCard(elId, code, fid, nome){
   $(elId).innerHTML = `<h3>${esc(nome)}</h3>
     <div class="cpl">
       <div class="pill ${cplCls}">CPL do mês<b>${cpl==null?"—":"R$ "+cpl.toLocaleString("pt-BR",{maximumFractionDigits:2})}</b></div>
-      <div class="pill">Investido<b>${fmtR(spendMes)}</b></div>
+      <div class="pill">Investido (cadastro)<b>${fmtR(spendMes)}</b></div>
       <div class="pill">Receita webinário<b>${fmtK(t.comprasNet)}</b></div>
     </div>
     ${rows}
-    <div class="note">Mês até agora · % encadeado etapa a etapa vs meta da Fase 1. "Compras" = faturas pagas com UTM do webinário. Etapa "link ≥85%" ainda sem medição separada — Sala/Inscritos já embute o clique no link.</div>`;
+    <div class="note">Mês até agora · CPL = campanha de cadastro ÷ cadastros reais da plataforma (o Lead da Meta conta 1,4–1,7× a mais). % encadeado etapa a etapa vs meta da Fase 1. "Compras" = faturas pagas com UTM do webinário. Etapa "link ≥85%" ainda sem medição separada — Sala/Inscritos já embute o clique no link.</div>`;
 }
 function renderFunis(){
   funilCard("funil-tjam", "TJAM", "tjam", "TJ-AM · Webinário");
@@ -952,7 +964,7 @@ function renderAlertas(){
 
   for (const [fid, code, nome] of [["tjam","TJAM","TJ-AM"],["seducpa","SEDUC_PA","SEDUC-PA"],["seducam","SEDUC_AM","SEDUC-AM"]]){
     const t = agregaFunil(code);
-    const spend = spendFrenteJanela(fid, "2026-09-01", hoje);
+    const spend = spendWebJanela(fid, "2026-09-01", hoje);
     const cpl = t.inscritos > 0 ? spend/t.inscritos : null;
     const fx = CPL_FAIXA[fid];
     if (cpl != null && fx){
