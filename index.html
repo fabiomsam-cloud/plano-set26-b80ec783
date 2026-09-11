@@ -10,22 +10,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --page:#0c0d0f; --surface:#17181b; --surface-2:#1f2024;
-  --ink:#ffffff; --ink-2:#c6c5bc; --muted:#8b8983;
-  --grid:#2b2c30; --ring:rgba(255,255,255,.10);
-  --gold:#d9a53f; --gold-soft:rgba(217,165,63,.14);
-  --blue:#3987e5; --green:#1fa878; --red:#d5544e; --amber:#c98500;
-  --good:#1fa878; --warn:#c98500; --critical:#d5544e;
+  --page:#f5f6f8; --surface:#ffffff; --surface-2:#f2f4f7;
+  --ink:#0f172a; --ink-2:#334155; --muted:#64748b;
+  --grid:#e5e8ee; --ring:rgba(15,23,42,.08);
+  --gold:#b7791f; --gold-soft:rgba(183,121,31,.12);
+  --blue:#2563eb; --green:#15803d; --red:#dc2626; --amber:#b45309;
+  --good:#15803d; --warn:#b45309; --critical:#dc2626;
   --disp:"Bricolage Grotesque",sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scrollbar-color:#3a3a38 var(--page)}
+html{scrollbar-color:#cbd5e1 var(--page)}
 body{background:var(--page);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;min-height:100vh;position:relative}
-body::before{content:"";position:absolute;left:0;right:0;top:0;height:820px;pointer-events:none;z-index:0;
-  background:radial-gradient(1100px 460px at 80% -10%, rgba(217,165,63,.10), transparent 60%),
-             radial-gradient(860px 400px at -8% 2%, rgba(57,135,229,.06), transparent 55%)}
-body::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.05;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
+body::before{content:"";position:absolute;left:0;right:0;top:0;height:520px;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 380px at 85% -20%, rgba(183,121,31,.07), transparent 60%),
+             radial-gradient(700px 320px at -5% 0%, rgba(37,99,235,.05), transparent 55%)}
 .wrap{position:relative;z-index:1;max-width:1380px;margin:0 auto;padding:26px 30px 90px}
 
 header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:16px}
@@ -37,7 +35,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .stamp .clock{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--ink-2);letter-spacing:-.2px}
 .stamp .upd b{color:var(--ink-2)}
 
-.card{background:var(--surface);border:1px solid var(--ring);border-radius:15px;padding:20px 22px;position:relative;overflow:hidden}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .card h2{font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:-.2px}
 .card .hint{color:var(--muted);font-size:12px;margin-top:3px}
 .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
@@ -52,12 +50,12 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .cd .n{font-family:var(--disp);font-weight:800;font-size:21px;color:var(--gold);letter-spacing:-.4px}
 .cd .n.now{color:var(--green)}
 .cd .l{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
-.cd.fim{border-color:rgba(217,165,63,.45);background:linear-gradient(140deg,#221c0e 0%,var(--surface) 60%)}
-.cd.d1{border-color:rgba(213,84,78,.4)}
+.cd.fim{border-color:rgba(183,121,31,.45);background:linear-gradient(140deg,#fdf6e7 0%,var(--surface) 60%)}
+.cd.d1{border-color:rgba(220,38,38,.4)}
 .cd.d1 .n{color:var(--red)}
-.d1note{align-self:center;font-size:12px;color:var(--ink-2);background:rgba(213,84,78,.10);border:1px solid rgba(213,84,78,.3);
+.d1note{align-self:center;font-size:12px;color:var(--ink-2);background:rgba(220,38,38,.10);border:1px solid rgba(220,38,38,.3);
   border-radius:10px;padding:8px 13px}
-.d1note b{color:#ff9d97}
+.d1note b{color:#b42318}
 
 /* ---------- termômetro ---------- */
 .thermo-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
@@ -68,22 +66,22 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .tk .s{font-size:11.5px;color:var(--muted);margin-top:3px}
 .tk.medido .v{color:var(--gold)}
 .tk.proj .v{color:var(--ink)}
-.badge-est{display:inline-block;background:rgba(57,135,229,.16);color:#7db2f0;border:1px dashed rgba(57,135,229,.5);
+.badge-est{display:inline-block;background:rgba(37,99,235,.16);color:#1d4ed8;border:1px dashed rgba(37,99,235,.5);
   font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;vertical-align:2px}
-.badge-med{display:inline-block;background:rgba(217,165,63,.16);color:var(--gold);border:1px solid rgba(217,165,63,.5);
+.badge-med{display:inline-block;background:rgba(183,121,31,.16);color:var(--gold);border:1px solid rgba(183,121,31,.5);
   font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;vertical-align:2px}
 .thermo{margin:6px 0 8px}
 .thermo .track{position:relative;height:34px;background:var(--surface-2);border-radius:10px;overflow:visible}
-.thermo .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#a87b23,var(--gold));border-radius:10px 0 0 10px;min-width:3px}
+.thermo .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#d9a53f,var(--gold));border-radius:10px 0 0 10px;min-width:3px}
 .thermo .fill-est{position:absolute;top:0;bottom:0;border-radius:0;opacity:.85;
-  background:repeating-linear-gradient(135deg, rgba(57,135,229,.42) 0 7px, rgba(57,135,229,.16) 7px 14px)}
+  background:repeating-linear-gradient(135deg, rgba(37,99,235,.42) 0 7px, rgba(37,99,235,.16) 7px 14px)}
 .thermo .mark{position:absolute;top:-7px;bottom:-7px;width:2px;background:var(--ink-2)}
-.thermo .mark.meta{background:var(--gold);width:3px;box-shadow:0 0 10px rgba(217,165,63,.7)}
+.thermo .mark.meta{background:var(--gold);width:3px;box-shadow:0 0 8px rgba(183,121,31,.5)}
 .thermo .mlab{position:absolute;top:-26px;transform:translateX(-50%);font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap}
 .thermo .mlab b{color:var(--ink-2)}
 .thermo .mlab.meta b{color:var(--gold)}
 .thermo-scale{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:8px;font-variant-numeric:tabular-nums}
-.est-list{margin-top:14px;border-top:1px solid rgba(255,255,255,.06);padding-top:12px}
+.est-list{margin-top:14px;border-top:1px solid rgba(15,23,42,.06);padding-top:12px}
 .est-list .er{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12.5px;color:var(--ink-2)}
 .est-list .er b{font-variant-numeric:tabular-nums;color:var(--ink)}
 .vday{display:flex;align-items:flex-end;gap:4px;height:74px;margin-top:14px}
@@ -93,7 +91,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .vday .dv{font-size:9.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* ---------- verba ---------- */
-.vrow{display:grid;grid-template-columns:150px 1fr 92px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.vrow{display:grid;grid-template-columns:150px 1fr 92px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(15,23,42,.05)}
 .vrow:last-child{border-bottom:0}
 .vrow .name{font-size:12.5px;color:var(--ink-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vrow .name small{display:block;color:var(--muted);font-weight:400;font-size:10.5px}
@@ -101,7 +99,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .vrow .fill{height:100%;border-radius:5px;min-width:2px;background:var(--green)}
 .vrow .fill.over{background:var(--red)}
 .vrow .fill.near{background:var(--amber)}
-.vrow .cap{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.45)}
+.vrow .cap{position:absolute;top:0;bottom:0;width:2px;background:rgba(15,23,42,.45)}
 .vrow .num{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2)}
 .vrow .num b{color:var(--ink);display:block;font-size:12.5px}
 .vrow.total{border-top:1px solid var(--ring);margin-top:4px;padding-top:12px}
@@ -122,7 +120,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .frow .fl{font-size:12px;color:var(--ink-2);font-weight:600}
 .frow .track{height:16px;background:var(--surface-2);border-radius:5px;overflow:hidden;position:relative}
 .frow .fill{height:100%;border-radius:5px;background:var(--blue);min-width:2px}
-.frow .goal{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.55)}
+.frow .goal{position:absolute;top:0;bottom:0;width:2px;background:rgba(15,23,42,.55)}
 .frow .fv{text-align:right;font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
 .frow .fv b{color:var(--ink);font-size:12.5px}
 .frow .fv .pc{font-weight:700}
@@ -131,8 +129,30 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .soon .si{display:flex;justify-content:space-between;gap:10px;background:var(--surface-2);border-radius:10px;padding:10px 13px;font-size:12.5px}
 .soon .si .sn{color:var(--ink);font-weight:600}
 .soon .si .ss{color:var(--muted);text-align:right}
-.tag-soon{display:inline-block;background:rgba(201,133,0,.14);color:#e8b45c;border:1px dashed rgba(201,133,0,.45);
+.tag-soon{display:inline-block;background:rgba(180,83,9,.14);color:#92400e;border:1px dashed rgba(180,83,9,.45);
   font-size:10px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:6px}
+
+/* ---------- resumo por tipo + insights ---------- */
+.rs-wrap{overflow-x:auto;margin-top:10px}
+.rs{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
+.rs th{text-align:right;color:var(--muted);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:1px solid var(--grid);white-space:nowrap}
+.rs th:first-child,.rs td:first-child{text-align:left}
+.rs td{padding:8px;border-bottom:1px solid var(--grid);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+.rs td:first-child{color:var(--ink);font-weight:600}
+.rs tr:last-child td{border-bottom:0}
+.rs td small{color:var(--muted);font-size:10.5px}
+.rs td.ok{color:var(--green);font-weight:600} .rs td.mid{color:var(--amber);font-weight:600} .rs td.bad{color:var(--red);font-weight:600}
+.rs-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:18px}
+.rs-h h3{font-family:var(--disp);font-weight:700;font-size:14.5px;color:var(--ink)}
+.rs-h span{font-size:11px;color:var(--muted)}
+.ins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:900px){.ins{grid-template-columns:1fr}}
+.in{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--surface-2);border-left:3px solid var(--grid)}
+.in.good{border-left-color:var(--green)} .in.warn{border-left-color:var(--amber)} .in.bad{border-left-color:var(--red)} .in.info{border-left-color:var(--blue)}
+.in .ic{font-size:18px;line-height:1.1;flex:none}
+.in .t{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.in .t b{color:var(--ink)}
+.in .k{display:block;font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
 
 /* ---------- campanhas ---------- */
 .camp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -154,80 +174,80 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 .camp table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:520px}
 .camp th{text-align:right;color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:4px 6px;border-bottom:1px solid var(--grid);white-space:nowrap}
 .camp th:first-child{text-align:left}
-.camp td{padding:6px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+.camp td{padding:6px;border-bottom:1px solid rgba(15,23,42,.04);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
 .camp td:first-child{text-align:left;color:var(--ink);max-width:190px;overflow:hidden;text-overflow:ellipsis}
 .camp tr:last-child td{border-bottom:0}
 .camp .adname small{display:block;color:var(--muted);font-size:9.5px}
 .bdg{font-size:10px;padding:1px 6px;border-radius:6px;font-weight:700;white-space:nowrap}
-.bdg.win{background:rgba(217,165,63,.16);color:var(--gold)}
-.bdg.lose{background:rgba(213,84,78,.15);color:#ff9d97}
-.bdg.col{background:rgba(255,255,255,.06);color:var(--muted);font-weight:600}
-.pos-funil{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);font-size:11.5px;color:var(--muted)}
+.bdg.win{background:rgba(183,121,31,.16);color:var(--gold)}
+.bdg.lose{background:rgba(220,38,38,.15);color:#b42318}
+.bdg.col{background:rgba(15,23,42,.06);color:var(--muted);font-weight:600}
+.pos-funil{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid rgba(15,23,42,.06);font-size:11.5px;color:var(--muted)}
 .pos-funil .stp{background:var(--surface-2);border-radius:8px;padding:5px 10px;color:var(--ink-2)}
 .pos-funil .stp b{color:var(--ink);font-variant-numeric:tabular-nums}
 .pos-funil .arr{color:var(--muted)}
-.abx{margin-top:11px;padding:10px 12px;border:1px dashed rgba(57,135,229,.45);background:rgba(57,135,229,.06);border-radius:10px}
-.abx .abt{font-size:10.5px;font-weight:700;color:#7db2f0;letter-spacing:.05em;text-transform:uppercase}
+.abx{margin-top:11px;padding:10px 12px;border:1px dashed rgba(37,99,235,.45);background:rgba(37,99,235,.06);border-radius:10px}
+.abx .abt{font-size:10.5px;font-weight:700;color:#1d4ed8;letter-spacing:.05em;text-transform:uppercase}
 .abx .abrow{display:flex;gap:14px;flex-wrap:wrap;margin-top:7px;font-size:12px;color:var(--ink-2)}
 .abx .abrow b{color:var(--ink);font-variant-numeric:tabular-nums}
 .abx .abwarn{font-size:10.5px;color:var(--muted);margin-top:6px}
-.camp-aviso{margin-bottom:12px;padding:10px 14px;border-left:3px solid var(--amber);background:rgba(201,133,0,.07);border-radius:0 10px 10px 0;font-size:12px;color:var(--ink-2)}
-.camp-aviso b{color:#e8b45c}
+.camp-aviso{margin-bottom:12px;padding:10px 14px;border-left:3px solid var(--amber);background:rgba(180,83,9,.07);border-radius:0 10px 10px 0;font-size:12px;color:var(--ink-2)}
+.camp-aviso b{color:#92400e}
 .camp-err{padding:14px;border-radius:12px;background:var(--surface-2);color:var(--muted);font-size:12.5px}
 
 /* ---------- calendário ---------- */
 .cal{display:flex;flex-direction:column}
-.ci{display:grid;grid-template-columns:96px 14px 1fr auto;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.ci{display:grid;grid-template-columns:96px 14px 1fr auto;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(15,23,42,.05)}
 .ci:last-child{border-bottom:0}
 .ci .cd8{font-size:11.5px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;padding-top:2px;white-space:nowrap}
 .ci .dot{width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--muted);flex-shrink:0}
 .ci.feito .dot{background:var(--green)}
-.ci.hoje .dot{background:var(--gold);box-shadow:0 0 9px rgba(217,165,63,.8)}
+.ci.hoje .dot{background:var(--gold);box-shadow:0 0 8px rgba(183,121,31,.6)}
 .ci.atrasado .dot{background:var(--red)}
 .ci .ct{font-size:13px;color:var(--ink);font-weight:500}
 .ci .ct small{display:block;color:var(--muted);font-size:11.5px;font-weight:400;margin-top:1px}
-.ci.feito .ct{color:var(--ink-2);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25);text-decoration-thickness:1px}
+.ci.feito .ct{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(15,23,42,.3);text-decoration-thickness:1px}
 .st{font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:6px;white-space:nowrap;margin-top:2px}
-.st.feito{background:rgba(31,168,120,.15);color:#5fd3ab}
+.st.feito{background:rgba(21,128,61,.15);color:#15803d}
 .st.hoje{background:var(--gold-soft);color:var(--gold)}
-.st.pendente{background:rgba(255,255,255,.06);color:var(--muted)}
-.st.atrasado{background:rgba(213,84,78,.16);color:#ff9d97}
+.st.pendente{background:rgba(15,23,42,.06);color:var(--muted)}
+.st.atrasado{background:rgba(220,38,38,.16);color:#b42318}
 
 /* ---------- alertas ---------- */
 .alert-row{display:flex;align-items:center;gap:14px;padding:11px 14px;border-left:3px solid var(--critical);
-  background:rgba(213,84,78,.07);border-radius:0 10px 10px 0;margin-bottom:8px;flex-wrap:wrap}
-.alert-row.warn{border-left-color:var(--amber);background:rgba(201,133,0,.07)}
+  background:rgba(220,38,38,.07);border-radius:0 10px 10px 0;margin-bottom:8px;flex-wrap:wrap}
+.alert-row.warn{border-left-color:var(--amber);background:rgba(180,83,9,.07)}
 .alert-row .an{flex:1;min-width:200px;font-weight:600;color:var(--ink);font-size:13px}
 .alert-row .av{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--ink-2)}
 .all-ok{display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;
-  background:rgba(31,168,120,.09);border:1px solid rgba(31,168,120,.3);color:#5fd3ab;font-weight:600;font-size:14px}
+  background:rgba(21,128,61,.09);border:1px solid rgba(21,128,61,.3);color:#15803d;font-weight:600;font-size:14px}
 .all-ok .ic{font-size:20px}
 
-.err{background:rgba(213,84,78,.1);border:1px solid rgba(213,84,78,.4);border-radius:12px;padding:16px;color:#ff9d97;font-size:13px;margin-bottom:12px;display:none}
+.err{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.4);border-radius:12px;padding:16px;color:#b42318;font-size:13px;margin-bottom:12px;display:none}
 
 /* ---- abas de página + aba Tráfego ---- */
 .page-tabs{display:flex;gap:4px;background:var(--surface-2);border-radius:11px;padding:4px;margin-bottom:14px;width:max-content}
 .ptab{border:0;background:transparent;color:var(--ink-2);font-family:var(--body);font-size:13.5px;font-weight:700;
   padding:8px 18px;border-radius:8px;cursor:pointer}
-.ptab.on{background:var(--gold);color:#161204}
+.ptab.on{background:var(--ink);color:#fff}
 .ck-h{font-size:13px;color:var(--ink-2);margin:0 0 10px}
 .ck-list{display:flex;flex-direction:column;gap:6px}
 .ck{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--surface-2);
   cursor:pointer;border:1px solid transparent}
-.ck:hover{border-color:rgba(255,255,255,.12)}
+.ck:hover{border-color:rgba(15,23,42,.12)}
 .ck input{margin-top:2px;accent-color:var(--gold);width:16px;height:16px;flex:none;cursor:pointer}
 .ck .ct{font-size:12.5px;color:var(--ink);font-weight:600;line-height:1.35}
 .ck .cd{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
 .ck.done{opacity:.55}
 .ck.done .ct{text-decoration:line-through}
 .ck .when{font-size:10px;color:var(--gold);margin-top:2px}
-.rel-sec{padding:12px 14px;border-radius:11px;background:var(--surface-2);margin-bottom:10px;border-left:3px solid rgba(255,255,255,.14)}
+.rel-sec{padding:12px 14px;border-radius:11px;background:var(--surface-2);margin-bottom:10px;border-left:3px solid rgba(15,23,42,.14)}
 .rel-sec.ok{border-left-color:#1fa878}
 .rel-sec.warn{border-left-color:#d5a24e}
 .rel-sec h3{font-size:13.5px;margin:0 0 6px;color:var(--ink)}
 .rel-sec p{font-size:12.5px;color:var(--ink-2);margin:0 0 6px;line-height:1.55}
 .rel-sec p:last-child{margin-bottom:0}
-.rel-alert{color:#ffd9a0}
+.rel-alert{color:#92400e}
 .muted{color:var(--muted)}
 footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
 @media(max-width:640px){
@@ -315,11 +335,29 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
   </div>
 </div>
 
-<!-- ============ 2b · CAMPANHAS ============ -->
+<!-- ============ 2a · INSIGHTS ============ -->
 <div class="card" style="margin-bottom:12px">
   <div class="card-head">
-    <div><h2>Campanhas · análise por anúncio</h2>
-      <div class="hint">Graph API Meta (janela 7d p/ criativo, mês p/ CPL·CPA) cruzada com formulários do blindado e vendas Hubla por UTM · badge 🏆/🔻 só com gasto ≥ R$ 50 nos 7 dias</div>
+    <div><h2>Leituras automáticas</h2>
+      <div class="hint">O que os números estão dizendo hoje — calculado ao vivo a partir da Meta, da plataforma do webinário, das páginas do Estude Comigo e da Hubla</div></div>
+  </div>
+  <div class="ins" id="insights"></div>
+</div>
+
+<!-- ============ 2b · RESUMO POR TIPO ============ -->
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>Resumo por tipo de campanha</h2>
+      <div class="hint">Só campanhas ativas · mês até agora · CPL sempre pelo cadastro real (o Lead da Meta conta 1,4–1,7× a mais)</div></div>
+  </div>
+  <div id="resumo"></div>
+</div>
+
+<!-- ============ 2c · CAMPANHAS ============ -->
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>Campanhas ativas · análise por anúncio</h2>
+      <div class="hint">Só o que está no ar (pausadas somem daqui) · janela 7d p/ criativo, mês p/ CPL·CPA · badge 🏆/🔻 só com gasto ≥ R$ 50 nos 7 dias</div>
     </div>
   </div>
   <div id="camp-aviso"></div>
@@ -333,16 +371,15 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
   <div class="card fcard" id="funil-seducpa"></div>
   <div class="card fcard" id="funil-seducam"></div>
   <div class="card fcard">
-    <h3>Demais frentes <span class="tag-soon">INSTRUMENTAÇÃO A CAMINHO</span></h3>
-    <div class="hint" style="margin:6px 0 14px">Entram no painel assim que cada funil nascer e for medido — sem números inventados.</div>
+    <h3>Polícias AM · PRF <span class="tag-soon">SEM WEBINÁRIO</span></h3>
+    <div class="hint" style="margin:6px 0 14px">Frentes aquecidas direto: Fase 2 (vídeos) → Fase 3 (captação Estude Comigo) → grupo → encontros 21–25/09 → live 28 e 29/09.</div>
     <div class="soon">
-      <div class="si"><span class="sn">Polícias AM · Webinário</span><span class="ss">insumos 08/09 · @deltafabiosilva</span></div>
-      <div class="si"><span class="sn">PRF · Quiz + ingresso</span><span class="ss">página quiz + VSL 08/09</span></div>
-      <div class="si"><span class="sn">Play Passei · Webinário</span><span class="ss">CAPI + ponte Vturb pendentes</span></div>
-      <div class="si"><span class="sn">Blindado (VD)</span><span class="ss">medido por CPA na aba de verba/alertas</span></div>
+      <div class="si"><span class="sn">Fase 2 · Polícias AM</span><span class="ss">no ar 10/09 · R$ 330/dia até a Fase 3 · @deltafabiosilva</span></div>
+      <div class="si"><span class="sn">Fase 2 · PRF</span><span class="ss">no ar 10/09 · R$ 200/dia · ingresso encerrado</span></div>
+      <div class="si"><span class="sn">Fase 3 · Polícias + PRF</span><span class="ss">16/09 (vídeos do Fábio até 15/09) · PRF divide 120/80</span></div>
+      <div class="si"><span class="sn">Disparos de convite</span><span class="ss">16–17/09 · base de 10.000 em 10 camadas · só com OK</span></div>
     </div>
-  </div>
-</div>
+  </div></div>
 
 <!-- ============ 4 · CALENDÁRIO ============ -->
 <div class="card" style="margin-bottom:12px">
@@ -428,7 +465,7 @@ const FRENTES = [
   {id:"policias",  nome:"Polícias AM", diaria:330, det:"Fase 2 330 até a Fase 3 entrar (16/09) — v33: 150"},
   {id:"prf",       nome:"PRF",         diaria:200, det:"sem ingresso · Fase 2 200 → 16/09: Fase 2 120 + Fase 3 80"},
   {id:"blindado",  nome:"Blindado",    diaria:0,   det:"PAUSADO 11/09 nas 3 frentes (decisão do Fábio) · v33: 290"},
-  {id:"playpassei",nome:"Play Passei", diaria:136, det:"nossa metade (v33) · conta roda ~210"},
+  {id:"playpassei",nome:"Play Passei", diaria:136, det:"nossa metade (v33) · VSL vertical CBO 200 desde 11/09"},
 ];
 // ordem importa: PP antes de PRF (campanhas [PP][...][PRF]); SEMSA cai no blindado
 function classificar(nome){
@@ -461,29 +498,31 @@ const CAMP_INFO = [
   {id:"52664345880028",     t:"SEDUC-AM · Webinário (cadastro)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:7,stop:12}, diaria:220,
    obj:"Captação de cadastro p/ o webinário", pub:"[QUENTE] envolvimento AM + [FRIO] Advantage+ AM · v33: escalado p/ R$ 220 (CPL 2,83 · ROAS 10,9×)"},
   // ---- FASE 2 · consciência (vídeos sem link, ThruPlay) — 5 frentes
-  {id:"52664735806028",     t:"TJ-AM · Fase 2 (consciência)", conta:"TRIBUNAIS", tipo:"video", faixa:{ok:0.10,stop:0.25}, diaria:130,
+  {id:"52664735806028",     t:"TJ-AM · Fase 2 (consciência)", conta:"TRIBUNAIS", tipo:"video", frente:"TJ-AM", pub75:"TJAM", faixa:{ok:0.10,stop:0.25}, diaria:130,
    obj:"Vídeos de quebra de objeção p/ públicos quente/morno/frio", pub:"No ar 09/09 · 30 anúncios (10 vídeos × 3 temperaturas) · @souconcurseiro · públicos 75% só informados, nunca entram sozinhos na Fase 3"},
-  {id:"120256295402120492", t:"SEDUC-AM · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", faixa:{ok:0.10,stop:0.25}, diaria:80,
+  {id:"120256295402120492", t:"SEDUC-AM · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", frente:"SEDUC-AM", pub75:"SEDUC_AM", faixa:{ok:0.10,stop:0.25}, diaria:80,
    obj:"Vídeos de consciência (professor: carreira R$ 2.932→15.270, 7.862 vagas)", pub:"No ar 10/09 · 12 anúncios (4 vídeos × 3) · @souconcurseiro"},
-  {id:"52664735869628",     t:"SEDUC-PA · Fase 2 (consciência)", conta:"TRIBUNAIS", tipo:"video", faixa:{ok:0.10,stop:0.25}, diaria:120,
+  {id:"52664735869628",     t:"SEDUC-PA · Fase 2 (consciência)", conta:"TRIBUNAIS", tipo:"video", frente:"SEDUC-PA", pub75:"SEDUC_PA", faixa:{ok:0.10,stop:0.25}, diaria:120,
    obj:"Vídeos de consciência (edital FGV, prova 29/11)", pub:"No ar 10/09 · 15 anúncios (5 vídeos × 3) · @souconcurseiro"},
-  {id:"120256295405940492", t:"Polícias AM · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", faixa:{ok:0.10,stop:0.25}, diaria:330,
+  {id:"120256295405940492", t:"Polícias AM · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", frente:"Polícias AM", pub75:"POLICIAS", faixa:{ok:0.10,stop:0.25}, diaria:330,
    obj:"Vídeos do Delegado p/ base policial do Amazonas", pub:"No ar 10/09 · 10 anúncios (5 vídeos × quente/morno) · @deltafabiosilva · R$ 330 até a Fase 3 entrar (16/09), depois divide"},
-  {id:"120256295408100492", t:"PRF · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", faixa:{ok:0.10,stop:0.25}, diaria:200,
+  {id:"120256295408100492", t:"PRF · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", frente:"PRF", pub75:"PRF", faixa:{ok:0.10,stop:0.25}, diaria:200,
    obj:"Vídeos do Delegado p/ base PRF (ingresso encerrado 10/09)", pub:"No ar 10/09 · 6 vídeos × 3 temperaturas · @deltafabiosilva · R$ 200 (verba inteira da frente) → 16/09: 120 aqui + 80 na Fase 3"},
   // ---- FASE 3 · captação Estude Comigo (Lead só qualificado, via gerador de páginas)
-  {id:"52665102440428",     t:"TJ-AM · Fase 3 (captação Estude Comigo)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:5,stop:8}, diaria:60, ec:"fase3_tjam_ec_set26",
+  {id:"52665102440428",     t:"TJ-AM · Fase 3 (captação Estude Comigo)", conta:"TRIBUNAIS", tipo:"lead", frente:"TJ-AM", faixa:{ok:5,stop:8}, diaria:60, ec:"fase3_tjam_ec_set26",
    obj:"Cadastro qualificado (ensino superior) → grupo Estude Comigo 14–18/09", pub:"No ar 10/09 · AQUECIDOS (75% + inscritos do webinário + pixel) / QUENTES · 8 anúncios"},
-  {id:"120256316109260492", t:"SEDUC-AM · Fase 3 (captação Estude Comigo)", conta:"ON-LINE", tipo:"lead", faixa:{ok:7,stop:12}, diaria:60, ec:"fase3_seducam_ec_set26",
+  {id:"120256316109260492", t:"SEDUC-AM · Fase 3 (captação Estude Comigo)", conta:"ON-LINE", tipo:"lead", frente:"SEDUC-AM", faixa:{ok:7,stop:12}, diaria:60, ec:"fase3_seducam_ec_set26",
    obj:"Cadastro qualificado (vai fazer p/ professor) → grupo 14–18/09", pub:"No ar 10/09 · AQUECIDOS / QUENTES (inclui inscritos do webinário) · 8 anúncios"},
-  {id:"52665102467028",     t:"SEDUC-PA · Fase 3 (captação Estude Comigo)", conta:"TRIBUNAIS", tipo:"lead", faixa:{ok:4.5,stop:6.5}, diaria:60, ec:"fase3_seducpa_ec_set26",
+  {id:"52665102467028",     t:"SEDUC-PA · Fase 3 (captação Estude Comigo)", conta:"TRIBUNAIS", tipo:"lead", frente:"SEDUC-PA", faixa:{ok:4.5,stop:6.5}, diaria:60, ec:"fase3_seducpa_ec_set26",
    obj:"Cadastro qualificado (vai fazer p/ professor) → grupo 14–18/09", pub:"No ar 10/09 · AQUECIDOS / QUENTES · 6 anúncios"},
   // ---- PRF ingresso — ENCERRADO 10/09 (fica p/ leitura do mês)
   {id:"120256186603360492", t:"PRF · PV07 (ingresso) — ENCERRADA", conta:"ON-LINE", tipo:"purchase", faixa:{ok:55,stop:75}, diaria:null,
    obj:"Venda do ingresso R$ 19,90 — encerrada por decisão de 10/09", pub:"Verba da frente foi p/ Fase 2/3 · 39 ingressos a R$ 49,60 no mês"},
   {id:"120256234659840492", t:"PRF · PV11 (ingresso) — ENCERRADA", conta:"ON-LINE", tipo:"purchase", faixa:{ok:55,stop:75}, diaria:null,
    obj:"Teste de página do ingresso — encerrada 10/09", pub:"Retirar do plano (v34)"},
-  // ---- Play Passei (SPOTFABIO) — v33: nossa metade R$ 136/dia; conta roda ~R$ 210
+  // ---- Play Passei (SPOTFABIO) — v33: nossa metade R$ 136/dia
+  {id:"120249755892890307", t:"Play Passei · VSL vertical",   conta:"SPOTFABIO", tipo:"purchase", faixa:{ok:80,stop:120}, diaria:null,
+   obj:"Venda direta VSL vertical (Vturb) — CPA-meta R$ 80", pub:"No ar 11/09 · CBO R$ 200 · Advantage+ 25-65 + LAL 1% clientes, excl. compradores 180d · 12 anúncios · ler 3 dias na segunda, julgar 18/09"},
   {id:"120248542127820307", t:"Play Passei · frio LAL",       conta:"SPOTFABIO", tipo:"purchase", faixa:{ok:200,stop:300}, diaria:null,
    obj:"Venda direta VSL R$ 297", pub:"Frio · LAL lista de clientes · CPA v33 82–109"},
   {id:"120248254735440307", t:"Play Passei · VD01 PRF",       conta:"SPOTFABIO", tipo:"purchase", faixa:{ok:200,stop:300}, diaria:null,
@@ -685,6 +724,8 @@ function renderAll(){
   renderRail(); renderCal();
   renderTermometro();
   renderVerba();
+  try { renderInsights(); } catch(e){ $("insights").innerHTML = `<div class="in warn"><div class="ic">⚠️</div><div class="t">Leituras indisponíveis: ${esc(e.message)}</div></div>`; }
+  try { renderResumo(); } catch(e){ $("resumo").innerHTML = `<p class="muted">resumo indisponível: ${esc(e.message)}</p>`; }
   renderCampanhas();
   renderFunis();
   renderAlertas();
@@ -747,6 +788,7 @@ function renderVerba(){
   let h = "";
   for (const f of FRENTES){
     const g = por[f.id] || 0;
+    if (f.diaria === 0 && g < 0.5) continue;   // frente pausada sem gasto some da lista
     const r = f.diaria > 0 ? g / f.diaria : (g > 0 ? 9 : 0);
     const cls = r > 1.1 ? "over" : r > 0.92 ? "near" : "";
     h += `<div class="vrow"><div class="name">${esc(f.nome)}<small>diária R$ ${f.diaria}${f.det?" · "+esc(f.det):""}</small></div>
@@ -852,6 +894,7 @@ function renderCampanhas(){
     const c = byId[info.id];
     if (!c) continue;
     const ativo = c.status === "ACTIVE";
+    if (!ativo) continue;                       // pausada/encerrada não aparece (pedido do Fábio 11/09)
     const tot7 = {spend:0, conv:0}, totM = {spend:0, ilc:0, conv:0};
     for (const ad of c.ads){
       tot7.spend += ad.j7.spend; tot7.conv += convDoAd(ad, info.tipo, "j7");
@@ -946,6 +989,136 @@ function renderCampanhas(){
     </div>`;
   }
   box.innerHTML = h;
+}
+
+/* ---- 2a/2b · resumo por tipo + leituras automáticas ---- */
+const WEB_FRENTES = [["tjam","TJAM","TJ-AM"],["seducpa","SEDUC_PA","SEDUC-PA"],["seducam","SEDUC_AM","SEDUC-AM"]];
+const WEB_CAMP = { tjam:"52663791462228", seducpa:"52663860728228", seducam:"52664345880028" };
+const dISO = n => new Date(Date.now() - (4 + 24*n)*3600e3).toISOString().slice(0,10);
+function funilJanela(code, deISO, ateISO){
+  const dias = RAW.funil_dia?.[code] || {}; let ins = 0;
+  for (const [d, v] of Object.entries(dias)) if (d >= deISO && d <= ateISO) ins += v.inscritos;
+  return ins;
+}
+function webRow(fid, code, nome){
+  const hoje = hojeManaus();
+  const spend = spendWebJanela(fid, "2026-09-01", hoje);
+  const t = agregaFunil(code);
+  const cpl = t.inscritos > 0 ? spend/t.inscritos : null;
+  const s3 = spendWebJanela(fid, dISO(3), dISO(1)), i3 = funilJanela(code, dISO(3), dISO(1));
+  const cpl3 = i3 > 0 ? s3/i3 : null;
+  const camp = (RAW.campanhas?.items||[]).find(c => c.id === WEB_CAMP[fid]);
+  const px = camp ? camp.ads.reduce((a,ad)=>a+ad.mes.px_lead,0) : 0;
+  return { fid, code, nome, spend, t, cpl, cpl3, px, ratio: t.inscritos > 0 ? px/t.inscritos : null,
+    sala: pct(t.sala,t.inscritos), pitch: pct(t.pitch,t.sala), oferta: pct(t.checkout,t.pitch), compra: pct(t.compras,t.checkout),
+    cac: t.compras > 0 ? spend/t.compras : null, roas: spend > 0 ? t.comprasNet/spend : null,
+    ativo: !!camp && camp.status === "ACTIVE" };
+}
+function videoAgg(c){ // por vídeo (prefixo "vN") no mês
+  const by = {};
+  for (const ad of c.ads){ const k = ad.nome.split(" · ")[0]; const a = (by[k] ??= {spend:0,thru:0,p75:0,v3s:0}); a.spend+=ad.mes.spend; a.thru+=ad.mes.thru; a.p75+=ad.mes.p75||0; a.v3s+=ad.mes.v3s; }
+  return by;
+}
+function renderResumo(){
+  const C = RAW.campanhas; const items = (C && C.ok) ? C.items : [];
+  const byId = {}; for (const it of items) byId[it.id] = it;
+  const fx = (v, ok, stop, inv) => v==null ? "" : inv ? (v >= ok ? "ok" : v >= stop ? "mid" : "bad") : (v <= ok ? "ok" : v <= stop ? "mid" : "bad");
+  let html = "";
+  // --- webinários
+  const rows = WEB_FRENTES.map(([f,c,n]) => webRow(f,c,n)).filter(r => r.ativo || r.spend > 0);
+  html += `<div class="rs-h"><h3>Webinários ativos · Fase 1</h3><span>gasto = campanha de cadastro · CPL 3d = últimos 3 dias fechados</span></div>
+  <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto mês</th><th>Cadastros</th><th>CPL mês</th><th>CPL 3d</th><th>Sala</th><th>Pitch/sala</th><th>Oferta/pitch</th><th>Compra/oferta</th><th>Matrículas</th><th>CAC</th><th>ROAS</th></tr>`;
+  for (const r of rows){
+    const f = CPL_FAIXA[r.fid];
+    html += `<tr><td>${esc(r.nome)}</td><td>${fmtR(r.spend)}</td><td>${r.t.inscritos.toLocaleString("pt-BR")}</td>
+      <td class="${fx(r.cpl,f.ok,f.stop)}">${fmtCusto(r.cpl)}</td><td class="${fx(r.cpl3,f.ok,f.stop)}">${fmtCusto(r.cpl3)}</td>
+      <td class="${fx(r.sala,.75,.6,true)}">${fmtPct(r.sala)}</td><td class="${fx(r.pitch,.45,.35,true)}">${fmtPct(r.pitch)}</td>
+      <td class="${fx(r.oferta,.30,.2,true)}">${fmtPct(r.oferta)}</td><td class="${fx(r.compra,.15,.1,true)}">${fmtPct(r.compra)}</td>
+      <td>${r.t.compras} <small>· ${fmtK(r.t.comprasNet)}</small></td><td>${fmtCusto(r.cac)}</td><td>${r.roas==null?"—":r.roas.toFixed(1)+"x"}</td></tr>`;
+  }
+  html += `</table></div>`;
+  // --- fase 2
+  const f2 = CAMP_INFO.filter(i => i.tipo === "video" && byId[i.id] && byId[i.id].status === "ACTIVE");
+  if (f2.length){
+    html += `<div class="rs-h"><h3>Fase 2 · consciência (vídeos ThruPlay)</h3><span>mês · retenção = 75% ÷ 3s · público 75% só informado</span></div>
+    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto</th><th>ThruPlays</th><th>R$/ThruPlay</th><th>Assistiram 75%</th><th>R$/75%</th><th>Retenção</th><th>Público 75%</th><th>Melhor vídeo</th></tr>`;
+    for (const i of f2){
+      const c = byId[i.id]; let sp=0,th=0,p75=0,v3=0;
+      for (const ad of c.ads){ sp+=ad.mes.spend; th+=ad.mes.thru; p75+=ad.mes.p75||0; v3+=ad.mes.v3s; }
+      const pub = C.publicos75?.[i.pub75];
+      const vids = Object.entries(videoAgg(c)).filter(([k,a]) => a.spend >= 5 && a.p75 > 0).sort((a,b)=>a[1].spend/a[1].p75 - b[1].spend/b[1].p75);
+      const best = vids[0] ? `${vids[0][0]} <small>(R$ ${(vids[0][1].spend/vids[0][1].p75).toFixed(2)}/75% · ${vids[0][1].v3s>0?Math.round(vids[0][1].p75/vids[0][1].v3s*100):"—"}%)</small>` : "—";
+      html += `<tr><td>${esc(i.frente)}</td><td>${fmtR(sp)}</td><td>${th.toLocaleString("pt-BR")}</td><td class="${fx(th>0?sp/th:null,.05,.08)}">${th>0?"R$ "+(sp/th).toFixed(3):"—"}</td>
+        <td>${p75.toLocaleString("pt-BR")}</td><td class="${fx(p75>0?sp/p75:null,.15,.3)}">${p75>0?"R$ "+(sp/p75).toFixed(2):"—"}</td>
+        <td>${v3>0?Math.round(p75/v3*100)+"%":"—"}</td><td>${pub&&pub.min!=null?`${pub.min.toLocaleString("pt-BR")}–${pub.max.toLocaleString("pt-BR")}`:"—"}</td><td>${best}</td></tr>`;
+    }
+    html += `</table></div>`;
+  }
+  // --- fase 3
+  const f3 = CAMP_INFO.filter(i => i.ec && byId[i.id] && byId[i.id].status === "ACTIVE");
+  if (f3.length){
+    html += `<div class="rs-h"><h3>Fase 3 · captação Estude Comigo</h3><span>cadastros e qualificados = páginas do gerador (banco) · Lead do pixel só p/ referência</span></div>
+    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto</th><th>Cadastros</th><th>Qualificados</th><th>R$/qualificado</th><th>Lead pixel</th><th>Por conjunto (qualif.)</th></tr>`;
+    for (const i of f3){
+      const c = byId[i.id]; let sp=0,px=0; for (const ad of c.ads){ sp+=ad.mes.spend; px+=ad.mes.px_lead; }
+      const q = c.leads_ec_mes||0, cad = c.cadastros_ec_mes||0;
+      const conj = Object.entries(c.ec_conjuntos||{}).sort((a,b)=>b[1].qual-a[1].qual).map(([k,v])=>`${esc(k)} ${v.qual}`).join(" · ");
+      html += `<tr><td>${esc(i.frente)}</td><td>${fmtR(sp)}</td><td>${cad}</td><td>${q} <small>(${cad>0?Math.round(q/cad*100):0}%)</small></td>
+        <td class="${fx(q>0?sp/q:null,i.faixa.ok*2,i.faixa.stop*2)}">${q>0?fmtCusto(sp/q):"—"}</td><td><small>${px}</small></td><td><small>${conj||"—"}</small></td></tr>`;
+    }
+    html += `</table></div>`;
+  }
+  $("resumo").innerHTML = html || `<p class="muted">sem campanhas ativas com dados</p>`;
+}
+
+function renderInsights(){
+  const out = []; const add = (cls, ic, k, t) => out.push({cls,ic,k,t});
+  const C = RAW.campanhas; const items = (C && C.ok) ? C.items : []; const byId = {}; for (const it of items) byId[it.id] = it;
+  const hoje = hojeManaus(); const diaN = Number(hoje.slice(8,10)); const restam = Math.max(30 - diaN, 1);
+  // ritmo da meta
+  const medido = Object.values(RAW.vendas_dia||{}).reduce((a,x)=>a+x.net,0);
+  const porDia = medido / Math.max(diaN,1), precisa = (META - medido) / restam;
+  add(precisa <= porDia ? "good" : precisa <= porDia*2 ? "warn" : "bad", "🎯", "Ritmo da meta",
+    `Medido <b>${fmtK(medido)}</b> em ${diaN} dias (${fmtK(porDia)}/dia). Para bater R$ 536k faltam <b>${fmtK(precisa)}/dia</b> nos ${restam} dias que restam${precisa > porDia*2 ? " — só fecha com os D1 de 29 e 30/09 e os cortes das lives" : ""}.`);
+  // teto
+  const gOntem = spendPorFrente(ontemManaus()).total;
+  if (gOntem > 0) add(gOntem > TETO_JANELA ? "bad" : gOntem > TETO_DIA ? "warn" : "good", "💸", "Verba",
+    `Ontem a Meta gastou <b>${fmtR(gOntem)}</b> contra teto de ${fmtR(TETO_DIA)}${gOntem > TETO_DIA ? (hoje <= ESTOURO_ATE ? " — dentro da janela de estouro aceita até 17/09" : " — acima do teto, realocar") : " — dentro do teto"}.`);
+  // webinários
+  for (const [f,c,n] of WEB_FRENTES){
+    const r = webRow(f,c,n); if (!r.ativo && r.spend === 0) continue;
+    if (r.ratio && r.ratio > 1.25) add("info", "🧮", n + " · atribuição", `A Meta conta <b>${r.ratio.toFixed(1)}×</b> mais leads que os cadastros reais (${r.px} vs ${r.t.inscritos}). Julgue pelo CPL real de <b>${fmtCusto(r.cpl)}</b>, não pelo Gerenciador.`);
+    const fx = CPL_FAIXA[f];
+    if (r.cpl3 != null && r.cpl != null && r.cpl3 > r.cpl*1.3) add(r.cpl3 > fx.stop ? "bad" : "warn", "📈", n + " · CPL subindo", `CPL dos últimos 3 dias <b>${fmtCusto(r.cpl3)}</b> contra ${fmtCusto(r.cpl)} no mês${r.cpl3 > fx.stop ? " — acima da faixa de parar (" + fx.stop + "): trocar criativo antes de cortar verba" : " — sinal de fadiga de criativo"}.`);
+    else if (r.cpl3 != null && r.cpl != null && r.cpl3 < r.cpl*0.8) add("good", "📉", n + " · CPL caindo", `Últimos 3 dias a <b>${fmtCusto(r.cpl3)}</b> (mês ${fmtCusto(r.cpl)}) — criativos novos ou público respondendo.`);
+    const gaps = [["Sala", r.sala, METAS_FUNIL.sala, r.t.inscritos],["Pitch", r.pitch, METAS_FUNIL.pitch, r.t.sala],["Oferta", r.oferta, METAS_FUNIL.checkout, r.t.pitch],["Compra", r.compra, METAS_FUNIL.compra, r.t.checkout]]
+      .filter(([,p,m,den]) => p != null && den >= 20 && p < m).map(([e,p,m]) => [e, p, m, (m-p)/m]).sort((a,b)=>b[3]-a[3]);
+    if (gaps.length){ const [e,p,m] = gaps[0]; add("warn", "🔻", n + " · gargalo", `Etapa <b>${e}</b> em ${fmtPct(p)} contra meta de ${Math.round(m*100)}% — é a etapa que mais perde gente${e==="Compra" ? " (o problema está depois do clique: régua da Anne e oferta)" : e==="Sala" ? " (link de entrada e lembretes)" : ""}.`); }
+    if (r.cac != null && r.roas != null) add(r.roas >= 3.5 ? "good" : r.roas >= 2 ? "warn" : "bad", "💰", n + " · retorno", `<b>${r.t.compras}</b> matrículas, CAC <b>${fmtCusto(r.cac)}</b>, ROAS <b>${r.roas.toFixed(1)}x</b> sobre a campanha de cadastro${r.roas >= 3.5 ? " — dentro da régua (≥3,5x)" : ""}.`);
+  }
+  // fase 2
+  const f2 = CAMP_INFO.filter(i => i.tipo === "video" && byId[i.id] && byId[i.id].status === "ACTIVE").map(i => { const c = byId[i.id]; let sp=0,p75=0,v3=0; for (const ad of c.ads){sp+=ad.mes.spend;p75+=ad.mes.p75||0;v3+=ad.mes.v3s;} return {i,c,sp,p75,v3,custo:p75>0?sp/p75:null}; }).filter(x=>x.sp>5);
+  if (f2.length){
+    const ord = [...f2].filter(x=>x.custo!=null).sort((a,b)=>a.custo-b.custo);
+    if (ord.length >= 2) add("info", "🎬", "Fase 2 · eficiência", `<b>${esc(ord[0].i.frente)}</b> tem o 75% mais barato (R$ ${ord[0].custo.toFixed(2)}) e <b>${esc(ord[ord.length-1].i.frente)}</b> o mais caro (R$ ${ord[ord.length-1].custo.toFixed(2)}). Retenção: ${f2.map(x=>`${esc(x.i.frente)} ${x.v3>0?Math.round(x.p75/x.v3*100):"—"}%`).join(" · ")}.`);
+    for (const x of f2){
+      const vids = Object.entries(videoAgg(x.c)).filter(([k,a]) => a.spend >= 5 && a.v3s > 0);
+      const bad = vids.filter(([k,a]) => a.p75/a.v3s < 0.035 || (a.p75>0 && a.spend/a.p75 > 0.45));
+      if (bad.length) add("warn", "✂️", esc(x.i.frente) + " · vídeos fracos", `${bad.map(([k])=>k).join(", ")} ${bad.length>1?"perdem":"perde"} quase todo mundo antes dos 75% — candidatos a pausa na próxima rotação.`);
+    }
+    const prontos = Object.entries(C.publicos75||{}).filter(([k,v]) => v.min != null && v.min >= 1000);
+    if (prontos.length) add("good", "👥", "Públicos 75%", `Já passaram de 1.000 pessoas: ${prontos.map(([k,v])=>`<b>${k.replace("_","-")}</b> ${v.min.toLocaleString("pt-BR")}–${v.max.toLocaleString("pt-BR")}`).join(" · ")}. Nenhum entra sozinho na Fase 3 — decisão sua.`);
+  }
+  // fase 3
+  const f3 = CAMP_INFO.filter(i => i.ec && byId[i.id] && byId[i.id].status === "ACTIVE");
+  for (const i of f3){
+    const c = byId[i.id]; let sp=0; for (const ad of c.ads) sp+=ad.mes.spend;
+    const q = c.leads_ec_mes||0, cad = c.cadastros_ec_mes||0; if (sp < 10) continue;
+    const conj = Object.entries(c.ec_conjuntos||{}).sort((a,b)=>b[1].qual-a[1].qual);
+    const lider = conj[0] ? `${esc(conj[0][0])} traz ${conj[0][1].qual} dos ${q}` : "";
+    add(q>0 && sp/q <= i.faixa.ok*2 ? "good" : "warn", "🧲", esc(i.frente) + " · Estude Comigo", `${fmtR(sp)} → <b>${q}</b> qualificados de ${cad} cadastros (${q>0?fmtCusto(sp/q):"—"} por qualificado). ${lider}${q > 0 && q/Math.max(diaN-9,1) < 5 ? " — ritmo baixo p/ os encontros: o volume vem dos disparos" : ""}.`);
+  }
+  $("insights").innerHTML = out.map(o => `<div class="in ${o.cls}"><div class="ic">${o.ic}</div><div class="t"><span class="k">${o.k}</span>${o.t}</div></div>`).join("") || `<div class="in info"><div class="ic">⏳</div><div class="t">Sem dados suficientes ainda.</div></div>`;
 }
 
 /* ---- 5 · alertas ---- */

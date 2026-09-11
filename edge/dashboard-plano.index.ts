@@ -21,6 +21,7 @@ const CAMPANHAS_PLANO: { id: string; conta: string; ec?: string }[] = [
   { id: "52665102440428", conta: "SCVP TRIBUNAIS", ec: "fase3_tjam_ec_set26" },       // [PLANO][FASE3][TJAM]
   { id: "120256316109260492", conta: "SCVP ON-LINE", ec: "fase3_seducam_ec_set26" },  // [PLANO][FASE3][SEDUCAM]
   { id: "52665102467028", conta: "SCVP TRIBUNAIS", ec: "fase3_seducpa_ec_set26" },    // [PLANO][FASE3][SEDUCPA]
+  { id: "120249755892890307", conta: "SPOTFABIO" },       // Play Passei · VSL vertical (11/09, CBO R$ 200)
   { id: "52664037551228", conta: "SCVP TRIBUNAIS" },      // [PLANO][BLINDADO][TJAM]
   { id: "120256238530960492", conta: "SCVP ON-LINE" },    // [PLANO][BLINDADO][SEDUCAM]
   { id: "120256238532240492", conta: "SCVP ON-LINE" },    // [PLANO][BLINDADO][SEMSA]
@@ -39,6 +40,12 @@ const CAMPANHAS_PLANO: { id: string; conta: string; ec?: string }[] = [
 // O seducam foi criado com code "seduc_amazonas"; o front (e o bloco de compras
 // por UTM) usam SEDUC_AM — sem este alias o funil do SEDUC-AM não aparece.
 const CODE_ALIAS: Record<string, string> = { seduc_amazonas: "SEDUC_AM" };
+
+// Públicos "assistiu 75%" combinados da Fase 2 (só INFORMAR o tamanho — nunca entram sozinhos na Fase 3)
+const AUDIENCIAS_75: Record<string, string> = {
+  TJAM: "52664992503628", SEDUC_AM: "120256310128410492", SEDUC_PA: "52665092616628",
+  POLICIAS: "120256316453610492", PRF: "120256318021350492",
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -174,8 +181,20 @@ async function fetchCampanhasMeta(token: string): Promise<CampMeta[]> {
   return out;
 }
 
+async function fetchPublicos75(token: string) {
+  const out: Record<string, { min: number | null; max: number | null; status: string }> = {};
+  for (const [k, id] of Object.entries(AUDIENCIAS_75)) {
+    try {
+      const a = await graphGet(id, { fields: "approximate_count_lower_bound,approximate_count_upper_bound,delivery_status" }, token);
+      out[k] = { min: a.approximate_count_lower_bound ?? null, max: a.approximate_count_upper_bound ?? null,
+                 status: a.delivery_status?.code === 200 ? "pronto" : String(a.delivery_status?.description ?? "") };
+    } catch (e) { out[k] = { min: null, max: null, status: "erro: " + String(e).slice(0, 80) }; }
+  }
+  return out;
+}
+
 // Cache simples em memória da instância (só a parte Meta) — o painel refresha a cada 5 min
-let META_CACHE: { t: number; data: CampMeta[] } | null = null;
+let META_CACHE: { t: number; data: CampMeta[]; publicos?: Record<string, unknown> } | null = null;
 const META_TTL_MS = 15 * 60_000;
 let META_STALE = ""; // último erro da Graph quando o cache antigo foi mantido
 
@@ -264,10 +283,9 @@ Deno.serve(async (req: Request) => {
       // (6) Cadastros do Estude Comigo (páginas do gerador v2, Fase 3) — só lead QUALIFICADO gera o evento
       fetchAll((a, b) =>
         db.from("campaign_events")
-          .select("event_time, utm_campaign, utm_term, qualified:raw_payload->>qualified")
+          // o evento é gravado p/ TODO cadastro; o flag diz quem é qualificado (só esse recebe link do grupo + Lead CAPI)
+          .select("event_time, utm_campaign, utm_content, utm_term, qualified:raw_payload->>qualified")
           .eq("event_type", "estude_comigo_lead").gte("event_time", SET_INI_ISO)
-          // o evento é gravado p/ TODO cadastro; só o qualificado recebe link do grupo e dispara o Lead (CAPI)
-          .eq("raw_payload->>qualified", "true")
           .order("event_time").range(a, b)
       ),
     ]);
@@ -339,7 +357,7 @@ Deno.serve(async (req: Request) => {
         let cached = true;
         if (!META_CACHE || Date.now() - META_CACHE.t > META_TTL_MS) {
           try {
-            META_CACHE = { t: Date.now(), data: await fetchCampanhasMeta(metaToken) };
+            META_CACHE = { t: Date.now(), data: await fetchCampanhasMeta(metaToken), publicos: await fetchPublicos75(metaToken) };
             cached = false; META_STALE = "";
           } catch (e) {
             if (!META_CACHE) throw e;          // sem cache nenhum: o bloco mostra o erro
@@ -352,7 +370,7 @@ Deno.serve(async (req: Request) => {
         const forms = formsBlindado as FormRow[];
         const vUtm = vendasUtm as VendaRow[];
 
-        type EcRow = { event_time: string; utm_campaign: string | null; utm_term: string | null };
+        type EcRow = { event_time: string; utm_campaign: string | null; utm_content: string | null; utm_term: string | null; qualified: string | null };
         const ecRows = leadsEc as EcRow[];
         const ecByCamp: Record<string, string | undefined> = {};
         for (const c of CAMPANHAS_PLANO) ecByCamp[c.id] = c.ec;
@@ -360,6 +378,13 @@ Deno.serve(async (req: Request) => {
         const items = META_CACHE.data.map((camp) => {
           const ecTag = ecByCamp[camp.id];
           const ecCamp = ecTag ? ecRows.filter((r) => (r.utm_campaign ?? "").toLowerCase() === ecTag) : [];
+          const ecQual = ecCamp.filter((r) => r.qualified === "true");
+          const ecConj: Record<string, { cad: number; qual: number }> = {};
+          for (const r of ecCamp) {
+            const k = (r.utm_content ?? "?").split(" (")[0].trim();  // "AQUECIDOS (75% + …)" → AQUECIDOS
+            (ecConj[k] ??= { cad: 0, qual: 0 }).cad++;
+            if (r.qualified === "true") ecConj[k].qual++;
+          }
           const fCamp = forms.filter((f) => (f.utm_campaign ?? "").includes(camp.id));
           const vCamp = vUtm.filter((v) => (v.utm_campaign ?? "").includes(camp.id));
           const ads = camp.ads.map((ad) => {
@@ -368,7 +393,7 @@ Deno.serve(async (req: Request) => {
             return {
               ...ad,
               // utm_term={{ad.name}} nas páginas do Estude Comigo
-              leads_ec_mes: ecTag ? ecCamp.filter((r) => (r.utm_term ?? "") === ad.nome).length : null,
+              leads_ec_mes: ecTag ? ecQual.filter((r) => (r.utm_term ?? "") === ad.nome).length : null,
               forms_mes: fAd.length,
               vendas_mes: vAd.length,
               vendas_net_mes: vAd.reduce((s, v) => s + Number(v.net_value ?? 0), 0),
@@ -377,13 +402,15 @@ Deno.serve(async (req: Request) => {
           return {
             id: camp.id, conta: camp.conta, nome: camp.nome, status: camp.status,
             orcamento_dia: camp.orcamento_dia, adsets: camp.adsets, ads,
-            leads_ec_mes: ecTag ? ecCamp.length : null,
+            leads_ec_mes: ecTag ? ecQual.length : null,      // qualificados
+            cadastros_ec_mes: ecTag ? ecCamp.length : null,  // todos os cadastros da página
+            ec_conjuntos: ecTag ? ecConj : null,
             forms_mes: fCamp.length,
             vendas_mes: vCamp.length,
             vendas_net_mes: vCamp.reduce((s, v) => s + Number(v.net_value ?? 0), 0),
           };
         });
-        campanhas = { ok: true, cached, stale: META_STALE || null, fetched_at: new Date(META_CACHE.t).toISOString(), items };
+        campanhas = { ok: true, cached, stale: META_STALE || null, fetched_at: new Date(META_CACHE.t).toISOString(), items, publicos75: META_CACHE.publicos ?? {} };
       } catch (e) {
         campanhas = { ok: false, error: String(e) };
       }
