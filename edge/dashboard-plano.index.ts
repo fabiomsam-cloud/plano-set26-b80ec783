@@ -11,7 +11,16 @@ const SET_INI_ISO = "2026-09-01T04:00:00.000Z"; // 01/09 00:00 em Manaus (-04)
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 // Campanhas do plano (id Meta → identidade mínima; o resto vive no front)
-const CAMPANHAS_PLANO: { id: string; conta: string }[] = [
+// ec = utm_campaign carimbada pelas páginas do Estude Comigo (Fase 3) → cadastros qualificados no banco
+const CAMPANHAS_PLANO: { id: string; conta: string; ec?: string }[] = [
+  { id: "52664735806028", conta: "SCVP TRIBUNAIS" },      // [PLANO][FASE2][TJAM] consciência
+  { id: "120256295402120492", conta: "SCVP ON-LINE" },    // [PLANO][FASE2][SEDUCAM]
+  { id: "52664735869628", conta: "SCVP TRIBUNAIS" },      // [PLANO][FASE2][SEDUCPA]
+  { id: "120256295405940492", conta: "SCVP ON-LINE" },    // [PLANO][FASE2][POLICIAS] @deltafabiosilva
+  { id: "120256295408100492", conta: "SCVP ON-LINE" },    // [PLANO][FASE2][PRF] @deltafabiosilva
+  { id: "52665102440428", conta: "SCVP TRIBUNAIS", ec: "fase3_tjam_ec_set26" },       // [PLANO][FASE3][TJAM]
+  { id: "120256316109260492", conta: "SCVP ON-LINE", ec: "fase3_seducam_ec_set26" },  // [PLANO][FASE3][SEDUCAM]
+  { id: "52665102467028", conta: "SCVP TRIBUNAIS", ec: "fase3_seducpa_ec_set26" },    // [PLANO][FASE3][SEDUCPA]
   { id: "52664037551228", conta: "SCVP TRIBUNAIS" },      // [PLANO][BLINDADO][TJAM]
   { id: "120256238530960492", conta: "SCVP ON-LINE" },    // [PLANO][BLINDADO][SEDUCAM]
   { id: "120256238532240492", conta: "SCVP ON-LINE" },    // [PLANO][BLINDADO][SEMSA]
@@ -65,7 +74,7 @@ async function fetchAll(
 /* ================= META GRAPH (bloco campanhas) ================= */
 type AdWin = {
   spend: number; imp: number; ctr: number; ilc: number;
-  v3s: number; thru: number; px_purchase: number; px_lead: number; px_ic: number;
+  v3s: number; thru: number; p75: number; px_purchase: number; px_lead: number; px_ic: number;
 };
 type AdRow = { id: string; nome: string; adset_id: string; adset: string; j7: AdWin; mes: AdWin };
 type CampMeta = {
@@ -75,7 +84,7 @@ type CampMeta = {
 };
 
 const INSIGHT_FIELDS =
-  "ad_id,ad_name,adset_id,adset_name,spend,impressions,ctr,inline_link_clicks,actions,video_thruplay_watched_actions";
+  "ad_id,ad_name,adset_id,adset_name,spend,impressions,ctr,inline_link_clicks,actions,video_thruplay_watched_actions,video_p75_watched_actions";
 
 function actVal(actions: { action_type: string; value: string }[] | undefined, ...types: string[]) {
   if (!actions) return 0;
@@ -86,6 +95,7 @@ function actVal(actions: { action_type: string; value: string }[] | undefined, .
 function parseInsightRow(r: Record<string, unknown>): AdWin {
   const actions = r.actions as { action_type: string; value: string }[] | undefined;
   const thruArr = r.video_thruplay_watched_actions as { value: string }[] | undefined;
+  const p75Arr = r.video_p75_watched_actions as { value: string }[] | undefined;
   return {
     spend: Number(r.spend ?? 0),
     imp: Number(r.impressions ?? 0),
@@ -93,12 +103,13 @@ function parseInsightRow(r: Record<string, unknown>): AdWin {
     ilc: Number(r.inline_link_clicks ?? 0),
     v3s: actVal(actions, "video_view"),
     thru: thruArr?.length ? Number(thruArr[0].value || 0) : 0,
+    p75: p75Arr?.length ? Number(p75Arr[0].value || 0) : 0,
     px_purchase: actVal(actions, "purchase", "offsite_conversion.fb_pixel_purchase", "omni_purchase"),
     px_lead: actVal(actions, "lead", "offsite_conversion.fb_pixel_lead"),
     px_ic: actVal(actions, "initiate_checkout", "offsite_conversion.fb_pixel_initiate_checkout", "omni_initiated_checkout"),
   };
 }
-const zeroWin = (): AdWin => ({ spend: 0, imp: 0, ctr: 0, ilc: 0, v3s: 0, thru: 0, px_purchase: 0, px_lead: 0, px_ic: 0 });
+const zeroWin = (): AdWin => ({ spend: 0, imp: 0, ctr: 0, ilc: 0, v3s: 0, thru: 0, p75: 0, px_purchase: 0, px_lead: 0, px_ic: 0 });
 
 async function graphGet(path: string, params: Record<string, string>, token: string) {
   const qs = new URLSearchParams({ ...params, access_token: token });
@@ -111,7 +122,7 @@ async function graphGet(path: string, params: Record<string, string>, token: str
 async function fetchCampanhasMeta(token: string): Promise<CampMeta[]> {
   const hoje = hojeManaus();
   const mesRange = JSON.stringify({ since: "2026-09-01", until: hoje });
-  const out = await Promise.all(CAMPANHAS_PLANO.map(async (c) => {
+  const one = async (c: { id: string; conta: string }): Promise<CampMeta> => {
     const [meta, ins7, insMes] = await Promise.all([
       graphGet(c.id, {
         fields: "name,effective_status,daily_budget,adsets.limit(30){id,name,effective_status,daily_budget,optimization_goal}",
@@ -147,7 +158,13 @@ async function fetchCampanhasMeta(token: string): Promise<CampMeta[]> {
       orcamento_dia: orcCamp ?? (orcAdsets > 0 ? orcAdsets : null),
       adsets, ads: Object.values(ads),
     };
-  }));
+  };
+  // lotes de 4 campanhas: 20 campanhas × 3 chamadas de uma vez estoura o rate limit da Graph (code 17)
+  const out: CampMeta[] = [];
+  for (let i = 0; i < CAMPANHAS_PLANO.length; i += 4) {
+    const lote = CAMPANHAS_PLANO.slice(i, i + 4);
+    out.push(...await Promise.all(lote.map(one)));
+  }
   return out;
 }
 
@@ -190,7 +207,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -216,9 +233,10 @@ Deno.serve(async (req: Request) => {
       // (3b) Compras atribuídas aos webinários (UTM carimbada no checkout)
       fetchAll((a, b) =>
         db.from("hubla_invoices")
-          .select("paid_at, net_value, total_value, utm_source, utm_campaign")
+          .select("paid_at, net_value, total_value, utm_source, utm_campaign, product_name")
           .eq("status", "Paga").gte("paid_at", SET_INI_ISO)
-          .or("utm_campaign.ilike.%webinario%,utm_source.ilike.%webinario%")
+          // as duas grafias da casa: "webinario" e "webnario" (08/09: venda SEDUC-AM veio "WEBNARIO")
+          .or("utm_campaign.ilike.%webinario%,utm_source.ilike.%webinario%,utm_campaign.ilike.%webnario%,utm_source.ilike.%webnario%")
           .order("paid_at").range(a, b)
       ),
       // (4) Formulários do checkout blindado (UTM = "nome|slug|campaign_id" / "ad|ad_id")
@@ -235,6 +253,13 @@ Deno.serve(async (req: Request) => {
           .eq("status", "Paga").gte("paid_at", SET_INI_ISO)
           .not("utm_campaign", "is", null)
           .order("paid_at").range(a, b)
+      ),
+      // (6) Cadastros do Estude Comigo (páginas do gerador v2, Fase 3) — só lead QUALIFICADO gera o evento
+      fetchAll((a, b) =>
+        db.from("campaign_events")
+          .select("event_time, utm_campaign, utm_term")
+          .eq("event_type", "estude_comigo_lead").gte("event_time", SET_INI_ISO)
+          .order("event_time").range(a, b)
       ),
     ]);
 
@@ -280,11 +305,16 @@ Deno.serve(async (req: Request) => {
 
     // ---- compras do webinário por frente × dia
     const comprasDia: Record<string, Record<string, { n: number; net: number }>> = {};
-    for (const r of comprasWeb as { paid_at: string; net_value: number | null; utm_source: string | null; utm_campaign: string | null }[]) {
+    for (const r of comprasWeb as { paid_at: string; net_value: number | null; utm_source: string | null; utm_campaign: string | null; product_name: string | null }[]) {
       const c = ((r.utm_campaign ?? "") + " " + (r.utm_source ?? "")).toLowerCase();
+      // UTM genérica ("WEBNARIO" sem campanha) não diz a frente — cai no produto
+      const p = (r.product_name ?? "").toUpperCase();
       const frente = c.includes("tjam") || c.includes("tj-am") ? "TJAM"
         : c.includes("seducpa") || c.includes("seduc-pa") ? "SEDUC_PA"
         : c.includes("seducam") || c.includes("seduc-am") ? "SEDUC_AM"
+        : p.includes("SEDUC AM") || p.includes("SEDUC-AM") ? "SEDUC_AM"
+        : p.includes("SEDUC-PA") || p.includes("SEDUC PA") ? "SEDUC_PA"
+        : p.includes("TRIBUNAL") || p.includes("TJ") ? "TJAM"
         : "OUTROS";
       const d = diaManaus(r.paid_at)!;
       const bucket = ((comprasDia[frente] ??= {})[d] ??= { n: 0, net: 0 });
@@ -307,7 +337,14 @@ Deno.serve(async (req: Request) => {
         const forms = formsBlindado as FormRow[];
         const vUtm = vendasUtm as VendaRow[];
 
+        type EcRow = { event_time: string; utm_campaign: string | null; utm_term: string | null };
+        const ecRows = leadsEc as EcRow[];
+        const ecByCamp: Record<string, string | undefined> = {};
+        for (const c of CAMPANHAS_PLANO) ecByCamp[c.id] = c.ec;
+
         const items = META_CACHE.data.map((camp) => {
+          const ecTag = ecByCamp[camp.id];
+          const ecCamp = ecTag ? ecRows.filter((r) => (r.utm_campaign ?? "").toLowerCase() === ecTag) : [];
           const fCamp = forms.filter((f) => (f.utm_campaign ?? "").includes(camp.id));
           const vCamp = vUtm.filter((v) => (v.utm_campaign ?? "").includes(camp.id));
           const ads = camp.ads.map((ad) => {
@@ -315,6 +352,8 @@ Deno.serve(async (req: Request) => {
             const vAd = vCamp.filter((v) => (v.utm_content ?? "").includes(ad.id));
             return {
               ...ad,
+              // utm_term={{ad.name}} nas páginas do Estude Comigo
+              leads_ec_mes: ecTag ? ecCamp.filter((r) => (r.utm_term ?? "") === ad.nome).length : null,
               forms_mes: fAd.length,
               vendas_mes: vAd.length,
               vendas_net_mes: vAd.reduce((s, v) => s + Number(v.net_value ?? 0), 0),
@@ -323,6 +362,7 @@ Deno.serve(async (req: Request) => {
           return {
             id: camp.id, conta: camp.conta, nome: camp.nome, status: camp.status,
             orcamento_dia: camp.orcamento_dia, adsets: camp.adsets, ads,
+            leads_ec_mes: ecTag ? ecCamp.length : null,
             forms_mes: fCamp.length,
             vendas_mes: vCamp.length,
             vendas_net_mes: vCamp.reduce((s, v) => s + Number(v.net_value ?? 0), 0),
