@@ -353,6 +353,15 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
   <div id="resumo"></div>
 </div>
 
+<!-- ============ 2b2 · PÚBLICOS ============ -->
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>Públicos "assistiu 75%" · crescimento</h2>
+      <div class="hint">Tamanho estimado pela Meta, gravado 1× por dia · nenhum entra sozinho em campanha — só acompanhamento</div></div>
+  </div>
+  <div id="publicos"></div>
+</div>
+
 <!-- ============ 2c · CAMPANHAS ============ -->
 <div class="card" style="margin-bottom:12px">
   <div class="card-head">
@@ -736,6 +745,7 @@ function renderAll(){
   renderVerba();
   try { renderInsights(); } catch(e){ $("insights").innerHTML = `<div class="in warn"><div class="ic">⚠️</div><div class="t">Leituras indisponíveis: ${esc(e.message)}</div></div>`; }
   try { renderResumo(); } catch(e){ $("resumo").innerHTML = `<p class="muted">resumo indisponível: ${esc(e.message)}</p>`; }
+  try { renderPublicos(); } catch(e){ $("publicos").innerHTML = `<p class="muted">públicos indisponíveis: ${esc(e.message)}</p>`; }
   renderCampanhas();
   renderFunis();
   renderAlertas();
@@ -1107,6 +1117,29 @@ function renderResumo(){
     html += `</table></div>`;
   }
   $("resumo").innerHTML = html || `<p class="muted">sem campanhas ativas com dados</p>`;
+}
+
+function renderPublicos(){
+  const C = RAW.campanhas; const box = $("publicos");
+  if (!C || !C.ok || !C.publicos75){ box.innerHTML = `<p class="muted">sem leitura de públicos agora</p>`; return; }
+  const labels = C.publicos_labels || {}, hist = C.publicos_hist || {};
+  const fmtN = v => v==null ? "—" : Number(v).toLocaleString("pt-BR");
+  const at = (k, diasAtras) => { const d = dISO(diasAtras); const arr = (hist[k]||[]).filter(x => x.dia <= d); return arr.length ? arr[arr.length-1] : null; };
+  let rows = "";
+  for (const [k, v] of Object.entries(C.publicos75)){
+    const h3 = at(k,3), h7 = at(k,7);
+    const delta = (ref) => ref && ref.min != null && v.min != null ? (v.min - ref.min) : null;
+    const d3 = delta(h3), d7 = delta(h7);
+    const spark = (hist[k]||[]).slice(-14).map(x => x.min||0);
+    const mx = Math.max(...spark, 1);
+    const bars = spark.map(n => `<span style="display:inline-block;width:6px;margin-right:2px;height:${Math.max(3, Math.round(n/mx*22))}px;background:var(--blue);border-radius:2px;vertical-align:bottom;opacity:.75"></span>`).join("");
+    rows += `<tr><td>${esc(labels[k]||k)}</td><td><b>${fmtN(v.min)}${v.max!=null && v.max!==v.min ? "–"+fmtN(v.max) : ""}</b></td>
+      <td>${h3 ? fmtN(h3.min) : "—"}${d3!=null?` <small class="${d3>0?"ok":""}">${d3>=0?"+":""}${fmtN(d3)}</small>`:""}</td>
+      <td>${h7 ? fmtN(h7.min) : "—"}${d7!=null?` <small class="${d7>0?"ok":""}">${d7>=0?"+":""}${fmtN(d7)}</small>`:""}</td>
+      <td style="text-align:left">${bars || "<small>histórico começa hoje</small>"}</td><td><small>${esc(v.status||"")}</small></td></tr>`;
+  }
+  box.innerHTML = `<div class="rs-wrap"><table class="rs"><tr><th>Público</th><th>Hoje</th><th>Há 3 dias</th><th>Há 7 dias</th><th style="text-align:left">14 dias</th><th>Status</th></tr>${rows}</table></div>
+    <div class="note">Fonte: estimativa da Meta (mínimo–máximo). Público novo leva até 24h para popular. O público dos reels orgânicos das Polícias entra aqui assim que for criado.</div>`;
 }
 
 function renderInsights(){

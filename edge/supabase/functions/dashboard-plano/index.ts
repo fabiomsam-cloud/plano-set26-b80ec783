@@ -42,9 +42,15 @@ const CAMPANHAS_PLANO: { id: string; conta: string; ec?: string }[] = [
 const CODE_ALIAS: Record<string, string> = { seduc_amazonas: "SEDUC_AM" };
 
 // Públicos "assistiu 75%" combinados da Fase 2 (só INFORMAR o tamanho — nunca entram sozinhos na Fase 3)
+// Rótulo do painel → id do público. Tamanho gravado 1×/dia em meta_audience_sizes (crescimento no painel).
 const AUDIENCIAS_75: Record<string, string> = {
   TJAM: "52664992503628", SEDUC_AM: "120256310128410492", SEDUC_PA: "52665092616628",
   POLICIAS: "120256316453610492", PRF: "120256318021350492",
+  // POLICIAS_ORG: reels orgânicos @deltafabiosilva (13/09) — id entra quando o público for criado
+};
+const AUD_LABEL: Record<string, string> = {
+  TJAM: "TJ-AM · Fase 2", SEDUC_AM: "SEDUC-AM · Fase 2", SEDUC_PA: "SEDUC-PA · Fase 2",
+  POLICIAS: "Polícias AM · Fase 2", PRF: "PRF · Fase 2", POLICIAS_ORG: "Polícias AM · reels orgânicos",
 };
 
 const corsHeaders = {
@@ -399,7 +405,16 @@ Deno.serve(async (req: Request) => {
         let cached = true;
         if (!META_CACHE || Date.now() - META_CACHE.t > META_TTL_MS) {
           try {
-            META_CACHE = { t: Date.now(), data: await fetchCampanhasMeta(metaToken), publicos: await fetchPublicos75(metaToken) };
+            const publicos = await fetchPublicos75(metaToken);
+            META_CACHE = { t: Date.now(), data: await fetchCampanhasMeta(metaToken), publicos };
+            // histórico diário (Manaus) — upsert idempotente, erro aqui não derruba o painel
+            try {
+              const dia = hojeManaus();
+              const rows = Object.entries(publicos).filter(([, v]) => v.min != null).map(([k, v]) => ({
+                audience_id: AUDIENCIAS_75[k], dia, nome: k, min_size: v.min, max_size: v.max, status: v.status, captured_at: new Date().toISOString(),
+              }));
+              if (rows.length) await db.from("meta_audience_sizes").upsert(rows, { onConflict: "audience_id,dia" });
+            } catch (e) { console.error("meta_audience_sizes", e); }
             cached = false; META_STALE = "";
           } catch (e) {
             if (!META_CACHE) throw e;          // sem cache nenhum: o bloco mostra o erro
@@ -452,7 +467,15 @@ Deno.serve(async (req: Request) => {
             vendas_net_mes: vCamp.reduce((s, v) => s + Number(v.net_value ?? 0), 0),
           };
         });
-        campanhas = { ok: true, cached, stale: META_STALE || null, fetched_at: new Date(META_CACHE.t).toISOString(), items, publicos75: META_CACHE.publicos ?? {} };
+        let hist: Record<string, { dia: string; min: number | null; max: number | null }[]> = {};
+        try {
+          const { data: h } = await db.from("meta_audience_sizes").select("nome, dia, min_size, max_size")
+            .gte("dia", new Date(Date.now() - 21 * 86400_000).toISOString().slice(0, 10)).order("dia");
+          for (const r of (h ?? []) as { nome: string; dia: string; min_size: number | null; max_size: number | null }[])
+            (hist[r.nome] ??= []).push({ dia: r.dia, min: r.min_size, max: r.max_size });
+        } catch (e) { console.error("hist públicos", e); }
+        campanhas = { ok: true, cached, stale: META_STALE || null, fetched_at: new Date(META_CACHE.t).toISOString(), items,
+          publicos75: META_CACHE.publicos ?? {}, publicos_labels: AUD_LABEL, publicos_hist: hist };
       } catch (e) {
         campanhas = { ok: false, error: String(e) };
       }
