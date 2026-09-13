@@ -46,7 +46,7 @@ const CODE_ALIAS: Record<string, string> = { seduc_amazonas: "SEDUC_AM" };
 const AUDIENCIAS_75: Record<string, string> = {
   TJAM: "52664992503628", SEDUC_AM: "120256310128410492", SEDUC_PA: "52665092616628",
   POLICIAS: "120256316453610492", PRF: "120256318021350492",
-  // POLICIAS_ORG: reels orgânicos @deltafabiosilva (13/09) — id entra quando o público for criado
+  POLICIAS_ORG: "120256353644610492", // reels orgânicos @deltafabiosilva (criado pelo Fábio 13/09; mídias 18093450371440696, 18114700763048461, 17888368773458032)
 };
 const AUD_LABEL: Record<string, string> = {
   TJAM: "TJ-AM · Fase 2", SEDUC_AM: "SEDUC-AM · Fase 2", SEDUC_PA: "SEDUC-PA · Fase 2",
