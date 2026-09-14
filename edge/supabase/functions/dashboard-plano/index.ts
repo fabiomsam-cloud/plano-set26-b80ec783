@@ -395,16 +395,24 @@ Deno.serve(async (req: Request) => {
       //      tabelas sendflow_*_snapshot, que servem de fallback (API fora / chave ausente).
       (async () => {
         const key = Deno.env.get("SENDFLOW_API_KEY") ?? "";
+        // bloqueio persistido no banco (sendflow_api_state) — vale para TODAS as instâncias da edge;
+        // sem isso cada cold start "esquecia" o bloqueio, batia na API e a Sendflow escalava a punição
+        if (key && Date.now() >= SF_BLOQUEADA_ATE) {
+          const { data: st } = await db.from("sendflow_api_state").select("blocked_until, last_error").eq("id", 1).maybeSingle();
+          if (st?.blocked_until && Date.parse(st.blocked_until) > Date.now()) { SF_BLOQUEADA_ATE = Date.parse(st.blocked_until); SF_ERRO = st.last_error ?? SF_ERRO; }
+        }
         if (key && Date.now() >= SF_BLOQUEADA_ATE && (!SF_CACHE || Date.now() - SF_CACHE.t > SF_TTL_MS)) {
           try {
             const r = await lerSendflow(key);
             SF_CACHE = { t: Date.now(), ...r }; SF_ERRO = "";
+            await db.from("sendflow_api_state").upsert({ id: 1, blocked_until: null, last_error: null, last_ok_at: new Date().toISOString(), updated_at: new Date().toISOString() });
             try {
               if (r.releases.length) await db.from("sendflow_releases_snapshot").upsert(r.releases, { onConflict: "release_id" });
               if (r.grupos.length) await db.from("sendflow_grupos_snapshot").upsert(r.grupos, { onConflict: "grupo_gid" });
             } catch (e) { console.error("sendflow snapshot upsert", e); }
           } catch (e) {
             console.error("sendflow api", e); SF_ERRO = String(e).slice(0, 220);
+            if (SF_BLOQUEADA_ATE > Date.now()) await db.from("sendflow_api_state").upsert({ id: 1, blocked_until: new Date(SF_BLOQUEADA_ATE).toISOString(), last_error: SF_ERRO, updated_at: new Date().toISOString() });
             if (SF_CACHE) SF_CACHE.t = Date.now() - SF_TTL_MS + 2 * 60_000;   // tenta de novo em 2 min (ou após o bloqueio)
           }
         }
