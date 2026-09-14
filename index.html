@@ -1222,6 +1222,27 @@ function renderResumo(){
     }
     html += `</table></div>`;
   }
+  // --- pessoas nos grupos (Sendflow) por projeto — snapshot gravado pela tarefa agendada
+  const SF = RAW.sendflow;
+  if (SF && SF.releases && SF.releases.length){
+    const ordemF = ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"];
+    const lastAt = SF.releases.map(r=>r.captured_at).sort().pop();
+    const idadeMin = lastAt ? Math.round((Date.now()-Date.parse(lastAt))/60000) : null;
+    const quando = lastAt ? new Date(lastAt).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
+    html += `<div class="rs-h"><h3>Pessoas nos grupos · Sendflow</h3><span>leitura ${quando}${idadeMin!=null && idadeMin>180?` <b style="color:var(--amber)">(há ${Math.round(idadeMin/60)}h — atualiza com o app aberto)</b>`:""} · participantes incluem as contas admin · entradas/saídas = analytics da release</span></div>
+    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Release</th><th>Grupos</th><th>Pessoas</th><th>Cheios</th><th>Entradas hoje</th><th>Entradas total</th><th>Saídas total</th><th>Por grupo</th></tr>`;
+    for (const fk of ordemF){
+      const rs = SF.releases.filter(r=>r.frente===fk); if (!rs.length) continue;
+      const tot = k => rs.reduce((a,r)=>a+(r[k]||0),0);
+      if (rs.length>1) html += `<tr><td>${esc(FRENTE_NOME[fk]||fk)}</td><td><b>total</b></td><td>${tot("grupos")}</td><td><b>${tot("participantes").toLocaleString("pt-BR")}</b></td><td>${tot("grupos_cheios")}</td><td>${tot("entradas_hoje")}</td><td>${tot("entradas_total").toLocaleString("pt-BR")}</td><td>${tot("saidas_total")}</td><td></td></tr>`;
+      for (const r of rs){
+        const gs = (SF.grupos||[]).filter(g=>g.release_id===r.release_id).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+        const porGrupo = gs.map(g=>`#${g.ordem||"?"} ${g.participantes||0}${g.cheio?" 🔒":""}`).join(" · ");
+        html += `<tr><td>${rs.length>1?"":esc(FRENTE_NOME[fk]||fk)}</td><td><small>${esc(r.nome||r.release_id)}${r.bloqueada?" · <b>bloqueada</b>":""}</small></td><td>${r.grupos||0}</td><td><b>${(r.participantes||0).toLocaleString("pt-BR")}</b></td><td>${r.grupos_cheios||0}</td><td>${r.entradas_hoje||0}</td><td>${(r.entradas_total||0).toLocaleString("pt-BR")}</td><td>${r.saidas_total||0}</td><td><small>${porGrupo||"—"}</small></td></tr>`;
+      }
+    }
+    html += `</table></div>`;
+  }
   $("resumo").innerHTML = html || `<p class="muted">sem campanhas ativas com dados</p>`;
 }
 

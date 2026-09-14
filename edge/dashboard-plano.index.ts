@@ -239,7 +239,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sfReleases, sfGrupos] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -337,6 +337,10 @@ Deno.serve(async (req: Request) => {
         if (error) { console.error("fn_plano_disparo_camadas", error); return []; }
         return data ?? [];
       })(),
+      // (13) Snapshot da Sendflow (releases/grupos do Estude Comigo) — gravado pela tarefa agendada "sendflow-snapshot-ec"
+      //      (a API da Sendflow só é alcançável pelo conector do app; sem chave no servidor)
+      (async () => { const { data } = await db.from("sendflow_releases_snapshot").select("*").order("frente"); return data ?? []; })(),
+      (async () => { const { data } = await db.from("sendflow_grupos_snapshot").select("*").order("release_id").order("ordem"); return data ?? []; })(),
     ]);
 
     // ---- Entradas nos grupos do Estude Comigo por lead (releases do Sendflow por frente)
@@ -579,6 +583,7 @@ Deno.serve(async (req: Request) => {
         }, {} as Record<string, number>),
       },
       bio,                     // leads do link da bio @deltafabiosilva (insumo Fase 2/3 Polícias/PRF)
+      sendflow: { releases: sfReleases, grupos: sfGrupos },  // pessoas nos grupos por projeto (snapshot)
     });
   } catch (e) {
     return json({ error: String(e) }, 500);
