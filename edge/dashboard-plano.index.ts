@@ -268,6 +268,26 @@ Deno.serve(async (req: Request) => {
   );
 
   // ---- CHECKLIST (aba Tráfego do painel): GET lista · POST {id, feito} marca/desmarca ----
+  // Lista de membros dos grupos (export CSV da Sendflow) → sendflow_membros. Body: { frente, membros: [{ numero, saiu }] }
+  // Substitui a lista da frente (fonte csv). Script: PLANO 2026/painel/carregar_membros_sendflow.py
+  if (url.searchParams.get("resource") === "membros" && req.method === "POST") {
+    try {
+      const b = await req.json() as { frente?: string; membros?: { numero: string; saiu?: boolean }[] };
+      const frente = String(b?.frente ?? "").toUpperCase();
+      if (!["TJAM", "SEDUC_AM", "SEDUC_PA", "POLICIAS", "PRF"].includes(frente) || !Array.isArray(b?.membros)) return json({ error: "frente/membros inválidos" }, 400);
+      const norm = (p: string) => { const d = String(p ?? "").replace(/\D/g, ""); return d.startsWith("55") && d.length >= 12 ? d.slice(2, 4) + d.slice(-8) : d.slice(0, 2) + d.slice(-8); };
+      const at = new Date().toISOString();
+      const rows = new Map<string, boolean>();
+      for (const m of b.membros!) { const n = norm(m.numero); if (n.length === 10) rows.set(n, (rows.get(n) ?? false) || !!m.saiu); }
+      await db.from("sendflow_membros").delete().eq("frente", frente).eq("fonte", "csv");
+      const arr = [...rows].map(([numero_norm, saiu]) => ({ frente, numero_norm, saiu, fonte: "csv", captured_at: at }));
+      for (let i = 0; i < arr.length; i += 500) {
+        const { error } = await db.from("sendflow_membros").upsert(arr.slice(i, i + 500), { onConflict: "frente,numero_norm" });
+        if (error) return json({ error: error.message }, 500);
+      }
+      return json({ ok: true, frente, membros: arr.length, saiu: arr.filter((r) => r.saiu).length, captured_at: at });
+    } catch (e) { return json({ error: String(e) }, 400); }
+  }
   if (url.searchParams.get("resource") === "checklist") {
     try {
       if (req.method === "POST") {
@@ -291,7 +311,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow, sfMembros] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -342,7 +362,7 @@ Deno.serve(async (req: Request) => {
       fetchAll((a, b) =>
         db.from("campaign_events")
           // o evento é gravado p/ TODO cadastro; o flag diz quem é qualificado (só esse recebe link do grupo + Lead CAPI)
-          .select("lead_id, event_time, utm_campaign, utm_content, utm_term, qualified:raw_payload->>qualified")
+          .select("lead_id, event_time, utm_campaign, utm_content, utm_term, qualified:raw_payload->>qualified, leads(phone)")
           .eq("event_type", "estude_comigo_lead").gte("event_time", SET_INI_ISO)
           .order("event_time").range(a, b)
       ),
@@ -367,7 +387,7 @@ Deno.serve(async (req: Request) => {
       ),
       // (9) Cadastros nas páginas do Estude Comigo vindos de DISPARO (utm_source anne-disparo) desde 14/09
       fetchAll((a, b) =>
-        db.from("campaign_events").select("lead_id, event_time, utm_campaign, qualified:raw_payload->>qualified")
+        db.from("campaign_events").select("lead_id, event_time, utm_campaign, qualified:raw_payload->>qualified, leads(phone)")
           .eq("event_type", "estude_comigo_lead").ilike("utm_source", "%anne-disparo%")
           .gte("event_time", "2026-09-14T04:00:00.000Z").order("event_time").range(a, b)
       ),
@@ -423,6 +443,9 @@ Deno.serve(async (req: Request) => {
         ]);
         return { releases: rel ?? [], grupos: grp ?? [], fonte: "snapshot", erro: key ? ("api indisponível · " + SF_ERRO + (SF_BLOQUEADA_ATE > Date.now() ? ` · chave bloqueada pela Sendflow até ${(() => { const d = new Date(SF_BLOQUEADA_ATE - 4 * 3600_000).toISOString(); return d.slice(8, 10) + "/" + d.slice(5, 7) + " " + d.slice(11, 16); })()} (Manaus)` : "")) : "sem SENDFLOW_API_KEY" };
       })(),
+      // (14) Membros dos grupos (lista da Sendflow: export CSV via POST op=membros, ou API) — fonte de verdade da entrada.
+      //      O webhook (group_events) perde ~metade das entradas nas SEDUCs; casamos por telefone com esta lista também.
+      fetchAll((a, b) => db.from("sendflow_membros").select("frente, numero_norm, saiu, captured_at").order("frente").order("numero_norm").range(a, b)),
     ]);
 
     // ---- Entradas nos grupos do Estude Comigo por lead (releases do Sendflow por frente)
@@ -445,9 +468,22 @@ Deno.serve(async (req: Request) => {
       if (!f || !r.lead_id) continue;
       (entradas.get(r.lead_id) ?? entradas.set(r.lead_id, []).get(r.lead_id)!).push({ f, t: Date.parse(r.created_at) });
     }
-    // entrou no grupo da frente depois do cadastro (tolerância de 1h p/ relógio/ordem dos webhooks)
-    const entrouGrupo = (leadId: string | null, f: string, cadastroIso: string) =>
-      !!leadId && (entradas.get(leadId) ?? []).some((e) => e.f === f && e.t >= Date.parse(cadastroIso) - 3600_000);
+    // lista de membros por frente (telefone DDD+8) — quem está/esteve no grupo segundo a Sendflow
+    const phoneNorm = (p: string | null | undefined) => {
+      const d = String(p ?? "").replace(/\D/g, "");
+      if (!d) return "";
+      return d.startsWith("55") && d.length >= 12 ? d.slice(2, 4) + d.slice(-8) : d.slice(0, 2) + d.slice(-8);
+    };
+    const membros = new Map<string, Set<string>>();
+    let membrosAt = "";
+    for (const m of sfMembros as { frente: string; numero_norm: string; saiu: boolean; captured_at: string }[]) {
+      (membros.get(m.frente) ?? membros.set(m.frente, new Set()).get(m.frente)!).add(m.numero_norm);
+      if (m.captured_at > membrosAt) membrosAt = m.captured_at;
+    }
+    // entrou no grupo da frente: pelo webhook (depois do cadastro, tolerância 1h) OU pela lista de membros (telefone)
+    const entrouGrupo = (leadId: string | null, f: string, cadastroIso: string, phone?: string | null) =>
+      (!!leadId && (entradas.get(leadId) ?? []).some((e) => e.f === f && e.t >= Date.parse(cadastroIso) - 3600_000)) ||
+      (!!phone && (membros.get(f)?.has(phoneNorm(phone)) ?? false));
 
     // ---- BIO: leads por dia × frente (PRF = farda PRF/indeciso; POLICIAS = PF/PC/PM)
     type BioRow = { created_at: string; phone_norm: string | null; produto_code: string; destino: string; respostas: Record<string, string> | null; utm_medium: string | null; utm_content: string | null };
@@ -566,7 +602,7 @@ Deno.serve(async (req: Request) => {
         const forms = formsBlindado as FormRow[];
         const vUtm = vendasUtm as VendaRow[];
 
-        type EcRow = { lead_id: string | null; event_time: string; utm_campaign: string | null; utm_content: string | null; utm_term: string | null; qualified: string | null };
+        type EcRow = { lead_id: string | null; event_time: string; utm_campaign: string | null; utm_content: string | null; utm_term: string | null; qualified: string | null; leads?: { phone: string | null } | null };
         const ecRows = leadsEc as EcRow[];
         const ecByCamp: Record<string, string | undefined> = {};
         for (const c of CAMPANHAS_PLANO) ecByCamp[c.id] = c.ec;
@@ -583,7 +619,7 @@ Deno.serve(async (req: Request) => {
             (ecConj[k] ??= { cad: 0, qual: 0, grp: 0 }).cad++;
             if (r.qualified === "true") {
               ecConj[k].qual++;
-              if (entrouGrupo(r.lead_id, ecFrente, r.event_time) && !ecNoGrupo.has(r.lead_id!)) { ecNoGrupo.add(r.lead_id!); ecConj[k].grp++; }
+              if (entrouGrupo(r.lead_id, ecFrente, r.event_time, r.leads?.phone) && !ecNoGrupo.has(r.lead_id!)) { ecNoGrupo.add(r.lead_id!); ecConj[k].grp++; }
             }
           }
           const fCamp = forms.filter((f) => (f.utm_campaign ?? "").includes(camp.id));
@@ -645,13 +681,14 @@ Deno.serve(async (req: Request) => {
         campanhas: disparos,
         // cadastros via disparo por frente (utm_campaign das páginas de nutrição: nutricao-<frente>-aula)
         // grupo = qualificados do disparo que entraram no grupo da frente (lead a lead, webhook do Sendflow)
-        cadastros: Object.fromEntries(Object.entries((ecCadDisparo as { lead_id: string | null; event_time: string; utm_campaign: string | null; qualified: string | null }[]).reduce((acc, r) => {
+        membros_at: membrosAt || null,   // última leitura da lista de membros da Sendflow
+        cadastros: Object.fromEntries(Object.entries((ecCadDisparo as { lead_id: string | null; event_time: string; utm_campaign: string | null; qualified: string | null; leads?: { phone: string | null } | null }[]).reduce((acc, r) => {
           const f = frenteDe(r.utm_campaign);
           const a = (acc[f] ??= { cad: 0, qual: 0, grupo: 0, _ids: new Set<string>() });
           a.cad++;
           if (r.qualified === "true") {
             a.qual++;
-            if (entrouGrupo(r.lead_id, f, r.event_time) && !a._ids.has(r.lead_id!)) { a._ids.add(r.lead_id!); a.grupo++; }
+            if (entrouGrupo(r.lead_id, f, r.event_time, r.leads?.phone) && !a._ids.has(r.lead_id!)) { a._ids.add(r.lead_id!); a.grupo++; }
           }
           return acc;
         }, {} as Record<string, { cad: number; qual: number; grupo: number; _ids: Set<string> }>)).map(([k, v]) => [k, { cad: v.cad, qual: v.qual, grupo: v.grupo }])),

@@ -1122,7 +1122,8 @@ function renderResumo(){
   // --- fase 3
   const f3 = CAMP_INFO.filter(i => i.ec && byId[i.id] && byId[i.id].status === "ACTIVE");
   if (f3.length){
-    html += `<div class="rs-h"><h3>Fase 3 · captação Estude Comigo</h3><span>cadastros e qualificados = páginas do gerador (banco) · grupo = entrada casada lead a lead (webhook Sendflow) · Lead do pixel só p/ referência</span></div>
+    const memAt = RAW.disparos?.membros_at ? new Date(RAW.disparos.membros_at).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : null;
+    html += `<div class="rs-h"><h3>Fase 3 · captação Estude Comigo</h3><span>cadastros e qualificados = páginas do gerador (banco) · grupo = telefone do cadastro na lista de membros da Sendflow${memAt?` (lista de ${memAt})`:""} ou no webhook · Lead do pixel só p/ referência</span></div>
     <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto</th><th>Cadastros</th><th>Qualificados</th><th>Entraram no grupo</th><th>R$/entrada</th><th>Fora do grupo</th><th>R$/qualificado</th><th>Lead pixel</th><th>Por conjunto (qualif. → grupo)</th></tr>`;
     for (const i of f3){
       const c = byId[i.id]; let sp=0,px=0; for (const ad of c.ads){ sp+=ad.mes.spend; px+=ad.mes.px_lead; }
@@ -1135,7 +1136,7 @@ function renderResumo(){
         <td class="${fx(q>0?sp/q:null,i.faixa.ok*2,i.faixa.stop*2)}">${q>0?fmtCusto(sp/q):"—"}</td><td><small>${px}</small></td><td><small>${conj||"—"}</small></td></tr>`;
     }
     html += `</table></div>
-    <div class="note" style="margin-top:6px">Entrada no grupo = o mesmo lead do cadastro aparece no webhook do Sendflow entrando num grupo da frente depois de se cadastrar. O webhook não registra toda entrada (em 14/09 registrou ~2/3 do que o Sendflow contou nas SEDUCs) — a taxa real tende a ser maior; use como piso. Meta da Fase 2 do plano: grupo ≥ 60% dos qualificados.</div>`;
+    <div class="note" style="margin-top:6px">Entrada no grupo = o telefone do cadastro está na lista de membros dos grupos da frente (export da Sendflow) ou o webhook registrou a entrada depois do cadastro. Só o webhook subestimava pela metade nas SEDUCs (corrigido 14/09). Meta da Fase 2 do plano: grupo ≥ 60% dos qualificados.</div>`;
   }
   // --- disparos Estude Comigo
   const D = RAW.disparos;
@@ -1145,7 +1146,7 @@ function renderResumo(){
       const f = (porFrente[c.frente] ??= { sent:0, skipE:0, skipO:0, pend:0, total:0, camp:[] });
       f.sent += c.sent; f.skipE += c.skipped_existing; f.skipO += c.skipped_optout; f.pend += c.pending; f.total += c.total; f.oo = (f.oo||0) + (c.optout_novos||0); f.camp.push(c);
     }
-    html += `<div class="rs-h"><h3>Disparos · Estude Comigo (WhatsApp via Anne)</h3><span>custo = enviadas × R$ 0,43 (pulados não custam) · cadastros = páginas do Estude Comigo com origem anne-disparo · grupo = qualificados do disparo que entraram no grupo (lead a lead, webhook Sendflow — piso) · custo por lead no grupo = custo ÷ entradas</span></div>
+    html += `<div class="rs-h"><h3>Disparos · Estude Comigo (WhatsApp via Anne)</h3><span>custo = enviadas × R$ 0,43 (pulados não custam) · cadastros = páginas do Estude Comigo com origem anne-disparo · grupo = qualificados do disparo cujo telefone está na lista de membros da Sendflow (ou entrada no webhook) · custo por lead no grupo = custo ÷ entradas</span></div>
     <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Onda / camada</th><th>Template</th><th>Enviadas</th><th>Puladas (conversa ativa)</th><th>Opt-out novos</th><th>Cadastros</th><th>Entraram no grupo</th><th>Custo</th><th>Custo / cadastro</th><th>Custo / lead no grupo</th><th>Previsto</th></tr>`;
     for (const [fk, f] of Object.entries(porFrente)){
       const cad = D.cadastros?.[fk] || { cad:0, qual:0, grupo:0 }, grp = cad.grupo || 0, grpTotal = D.grupo?.[fk] || 0;
