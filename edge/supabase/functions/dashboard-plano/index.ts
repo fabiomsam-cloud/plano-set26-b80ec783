@@ -239,7 +239,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -290,7 +290,7 @@ Deno.serve(async (req: Request) => {
       fetchAll((a, b) =>
         db.from("campaign_events")
           // o evento é gravado p/ TODO cadastro; o flag diz quem é qualificado (só esse recebe link do grupo + Lead CAPI)
-          .select("event_time, utm_campaign, utm_content, utm_term, qualified:raw_payload->>qualified")
+          .select("lead_id, event_time, utm_campaign, utm_content, utm_term, qualified:raw_payload->>qualified")
           .eq("event_type", "estude_comigo_lead").gte("event_time", SET_INI_ISO)
           .order("event_time").range(a, b)
       ),
@@ -315,7 +315,7 @@ Deno.serve(async (req: Request) => {
       ),
       // (9) Cadastros nas páginas do Estude Comigo vindos de DISPARO (utm_source anne-disparo) desde 14/09
       fetchAll((a, b) =>
-        db.from("campaign_events").select("event_time, utm_campaign, qualified:raw_payload->>qualified")
+        db.from("campaign_events").select("lead_id, event_time, utm_campaign, qualified:raw_payload->>qualified")
           .eq("event_type", "estude_comigo_lead").ilike("utm_source", "%anne-disparo%")
           .gte("event_time", "2026-09-14T04:00:00.000Z").order("event_time").range(a, b)
       ),
@@ -324,7 +324,44 @@ Deno.serve(async (req: Request) => {
         db.from("group_events").select("created_at, event_type, groups!inner(name)")
           .ilike("event_type", "%added%").gte("created_at", "2026-09-14T04:00:00.000Z").order("created_at").range(a, b)
       ),
+      // (11) Entradas nos grupos do Estude Comigo LEAD A LEAD (lead_id do webhook do Sendflow) desde 09/09 —
+      //      casa o cadastro da página (Fase 3 ou disparo) com a entrada no grupo da MESMA frente.
+      //      Cobertura parcial: o webhook não registra toda entrada (14/09: ~2/3 do que o Sendflow contou).
+      fetchAll((a, b) =>
+        db.from("group_events").select("lead_id, created_at, groups!inner(metadata)")
+          .ilike("event_type", "%added%").gte("created_at", "2026-09-09T04:00:00.000Z").order("created_at").range(a, b)
+      ),
+      // (12) Bases de disparo (tmp_disparo_*): camada × status — o que já foi disparado e o que falta
+      (async () => {
+        const { data, error } = await db.rpc("fn_plano_disparo_camadas");
+        if (error) { console.error("fn_plano_disparo_camadas", error); return []; }
+        return data ?? [];
+      })(),
     ]);
+
+    // ---- Entradas nos grupos do Estude Comigo por lead (releases do Sendflow por frente)
+    const EC_RELEASES: Record<string, string> = {
+      pHasARlCZ391RSiVkLkr: "TJAM", mXoF03n6WZ2bEehyuNt9: "TJAM",   // ESTUDE COMIGO TJ-AM (bloqueada) + grupos de agosto (oficial desde 14/09)
+      HChLcxInLc0aWS8ORS98: "SEDUC_AM", KLE3SEidOXAu1OzY24gi: "SEDUC_PA",
+      fRiCa8jorZXLuQq20ywu: "POLICIAS", "1KA9so23JVS0o7A9AZyR": "PRF",
+    };
+    const frenteDe = (s: string | null | undefined) => {
+      const c = (s ?? "").toLowerCase();
+      return c.includes("tjam") || c.includes("tj-am") ? "TJAM"
+        : c.includes("seduc-am") || c.includes("seducam") ? "SEDUC_AM"
+        : c.includes("seduc-pa") || c.includes("seducpa") ? "SEDUC_PA"
+        : c.includes("polic") ? "POLICIAS" : c.includes("prf") ? "PRF" : "OUTRAS";
+    };
+    type EntradaRow = { lead_id: string | null; created_at: string; groups: { metadata: Record<string, string> | null } | null };
+    const entradas = new Map<string, { f: string; t: number }[]>();
+    for (const r of ecEntradas as EntradaRow[]) {
+      const f = EC_RELEASES[r.groups?.metadata?.sendflow_campaign_id ?? ""];
+      if (!f || !r.lead_id) continue;
+      (entradas.get(r.lead_id) ?? entradas.set(r.lead_id, []).get(r.lead_id)!).push({ f, t: Date.parse(r.created_at) });
+    }
+    // entrou no grupo da frente depois do cadastro (tolerância de 1h p/ relógio/ordem dos webhooks)
+    const entrouGrupo = (leadId: string | null, f: string, cadastroIso: string) =>
+      !!leadId && (entradas.get(leadId) ?? []).some((e) => e.f === f && e.t >= Date.parse(cadastroIso) - 3600_000);
 
     // ---- BIO: leads por dia × frente (PRF = farda PRF/indeciso; POLICIAS = PF/PC/PM)
     type BioRow = { created_at: string; phone_norm: string | null; produto_code: string; destino: string; respostas: Record<string, string> | null; utm_medium: string | null; utm_content: string | null };
@@ -443,7 +480,7 @@ Deno.serve(async (req: Request) => {
         const forms = formsBlindado as FormRow[];
         const vUtm = vendasUtm as VendaRow[];
 
-        type EcRow = { event_time: string; utm_campaign: string | null; utm_content: string | null; utm_term: string | null; qualified: string | null };
+        type EcRow = { lead_id: string | null; event_time: string; utm_campaign: string | null; utm_content: string | null; utm_term: string | null; qualified: string | null };
         const ecRows = leadsEc as EcRow[];
         const ecByCamp: Record<string, string | undefined> = {};
         for (const c of CAMPANHAS_PLANO) ecByCamp[c.id] = c.ec;
@@ -452,11 +489,16 @@ Deno.serve(async (req: Request) => {
           const ecTag = ecByCamp[camp.id];
           const ecCamp = ecTag ? ecRows.filter((r) => (r.utm_campaign ?? "").toLowerCase() === ecTag) : [];
           const ecQual = ecCamp.filter((r) => r.qualified === "true");
-          const ecConj: Record<string, { cad: number; qual: number }> = {};
+          const ecFrente = frenteDe(ecTag);
+          const ecConj: Record<string, { cad: number; qual: number; grp: number }> = {};
+          const ecNoGrupo = new Set<string>();  // leads qualificados que entraram no grupo da frente após o cadastro
           for (const r of ecCamp) {
             const k = (r.utm_content ?? "?").split(" (")[0].trim();  // "AQUECIDOS (75% + …)" → AQUECIDOS
-            (ecConj[k] ??= { cad: 0, qual: 0 }).cad++;
-            if (r.qualified === "true") ecConj[k].qual++;
+            (ecConj[k] ??= { cad: 0, qual: 0, grp: 0 }).cad++;
+            if (r.qualified === "true") {
+              ecConj[k].qual++;
+              if (entrouGrupo(r.lead_id, ecFrente, r.event_time) && !ecNoGrupo.has(r.lead_id!)) { ecNoGrupo.add(r.lead_id!); ecConj[k].grp++; }
+            }
           }
           const fCamp = forms.filter((f) => (f.utm_campaign ?? "").includes(camp.id));
           const vCamp = vUtm.filter((v) => (v.utm_campaign ?? "").includes(camp.id));
@@ -477,6 +519,7 @@ Deno.serve(async (req: Request) => {
             orcamento_dia: camp.orcamento_dia, adsets: camp.adsets, ads,
             leads_ec_mes: ecTag ? ecQual.length : null,      // qualificados
             cadastros_ec_mes: ecTag ? ecCamp.length : null,  // todos os cadastros da página
+            grupo_ec_mes: ecTag ? ecNoGrupo.size : null,     // qualificados que entraram no grupo (lead a lead, webhook)
             ec_conjuntos: ecTag ? ecConj : null,
             forms_mes: fCamp.length,
             vendas_mes: vCamp.length,
@@ -515,13 +558,19 @@ Deno.serve(async (req: Request) => {
       disparos: {
         campanhas: disparos,
         // cadastros via disparo por frente (utm_campaign das páginas de nutrição: nutricao-<frente>-aula)
-        cadastros: (ecCadDisparo as { utm_campaign: string | null; qualified: string | null }[]).reduce((acc, r) => {
-          const c = (r.utm_campaign ?? "").toLowerCase();
-          const f = c.includes("tjam") ? "TJAM" : c.includes("seduc-am") || c.includes("seducam") ? "SEDUC_AM" : c.includes("seduc-pa") || c.includes("seducpa") ? "SEDUC_PA" : "OUTRAS";
-          (acc[f] ??= { cad: 0, qual: 0 }).cad++;
-          if (r.qualified === "true") acc[f].qual++;
+        // grupo = qualificados do disparo que entraram no grupo da frente (lead a lead, webhook do Sendflow)
+        cadastros: Object.fromEntries(Object.entries((ecCadDisparo as { lead_id: string | null; event_time: string; utm_campaign: string | null; qualified: string | null }[]).reduce((acc, r) => {
+          const f = frenteDe(r.utm_campaign);
+          const a = (acc[f] ??= { cad: 0, qual: 0, grupo: 0, _ids: new Set<string>() });
+          a.cad++;
+          if (r.qualified === "true") {
+            a.qual++;
+            if (entrouGrupo(r.lead_id, f, r.event_time) && !a._ids.has(r.lead_id!)) { a._ids.add(r.lead_id!); a.grupo++; }
+          }
           return acc;
-        }, {} as Record<string, { cad: number; qual: number }>),
+        }, {} as Record<string, { cad: number; qual: number; grupo: number; _ids: Set<string> }>)).map(([k, v]) => [k, { cad: v.cad, qual: v.qual, grupo: v.grupo }])),
+        // bases de disparo: camada × status (fn_plano_disparo_camadas) — feito × falta
+        camadas: camadasDisparo,
         grupo: (ecGrupo as { groups: { name: string } | null }[]).reduce((acc, r) => {
           const n = (r.groups?.name ?? "").toUpperCase();
           const f = /TJ-AM/.test(n) ? "TJAM" : /SEDUC-AM/.test(n) ? "SEDUC_AM" : /SEDUC-PA/.test(n) ? "SEDUC_PA" : /POLIC/.test(n) ? "POLICIAS" : /PRF/.test(n) ? "PRF" : "OUTRAS";

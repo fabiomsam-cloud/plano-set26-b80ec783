@@ -555,7 +555,20 @@ const BADGE_MIN_7D = 50;
 // Disparos Estude Comigo — previsão de gasto definida com o Fábio (R$ 0,43/msg): TJ ondas 1–3 ≈ 7.000 msgs; SEDUC-AM 4 camadas ≈ 4.720 msgs
 const TARIFA_MSG = 0.43;
 const PREV_DISPARO = { TJAM: 3000, SEDUC_AM: 2030, SEDUC_PA: null };
-const FRENTE_NOME = { TJAM: "TJ-AM", SEDUC_AM: "SEDUC-AM", SEDUC_PA: "SEDUC-PA", POLICIAS: "Polícias AM", PRF: "PRF" }; // regra dura: badge 🏆/🔻 só com gasto ≥ R$ 50 na janela de 7 dias
+const FRENTE_NOME = { TJAM: "TJ-AM", SEDUC_AM: "SEDUC-AM", SEDUC_PA: "SEDUC-PA", POLICIAS: "Polícias AM", PRF: "PRF" };
+// Camadas das bases de disparo do Estude Comigo (tmp_disparo_* no Data Core) — rótulo por código
+const CAMADA_LABEL = {
+  TJAM: { web: "Ouro do webinário (qualificado não comprador · plataforma)", P0: "Grupos de agosto (ainda no grupo)", P1: "Lead do webinário TJ-AM (Data Core)", P1a: "Cadastro Fase 3 que recebeu o link bloqueado", P1b: "Cadastro na página de nutrição fora do grupo", P2: "Base superior · lead ≤ 90 dias", P3: "Base superior · lead 90–365 dias" },
+  SEDUC_AM: { web: "Ouro do webinário (qualificado não comprador · plataforma)", P2: "Base SEDUC-AM · lead ≤ 90 dias", P3: "Base SEDUC-AM · lead 90–365 dias" },
+  SEDUC_PA: { web: "Ouro do webinário (qualificado não comprador · plataforma)" },
+  POLICIAS: { "1": "Camada 1 · pesquisa ≥ 58 pts", "2": "Camada 2 · pesquisa ~50 pts", "3": "Camada 3 · pesquisa ~45 pts", "4": "Camada 4 · pesquisa ~36 pts", "5": "Camada 5 · pesquisa ~33 pts / compradores LT", "6": "Camada 6 · compradores LT + ativos 90d / sem pesquisa", "7": "Camada 7 · sem pesquisa (pós)", "8": "Camada 8 · sem pesquisa (superior)", "9": "Camada 9 · sem pesquisa (superior)", "10": "Camada 10 · sem pesquisa (superior)" },
+};
+const CAMADA_ORDEM = { P0: 1, P1: 2, P1a: 3, P1b: 4, P2: 5, P3: 6 };
+// Camadas previstas no plano que ainda não têm base separada no banco
+const CAMADA_A_MONTAR = {
+  SEDUC_PA: ["Base SEDUC-PA · lead ≤ 90 dias", "Base SEDUC-PA · lead 90–365 dias"],
+  PRF: ["Base PRF (DDD 92 + superior) · Fase 3 entra 16/09"],
+}; // regra dura: badge 🏆/🔻 só com gasto ≥ R$ 50 na janela de 7 dias
 
 // CPL faixas escalar/parar (janela 3–7d) — CPL medível hoje só p/ webinários instrumentados
 const CPL_FAIXA = { tjam:{ok:5,stop:8}, seducpa:{ok:4.5,stop:6.5}, seducam:{ok:7,stop:12} };
@@ -1109,16 +1122,20 @@ function renderResumo(){
   // --- fase 3
   const f3 = CAMP_INFO.filter(i => i.ec && byId[i.id] && byId[i.id].status === "ACTIVE");
   if (f3.length){
-    html += `<div class="rs-h"><h3>Fase 3 · captação Estude Comigo</h3><span>cadastros e qualificados = páginas do gerador (banco) · Lead do pixel só p/ referência</span></div>
-    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto</th><th>Cadastros</th><th>Qualificados</th><th>R$/qualificado</th><th>Lead pixel</th><th>Por conjunto (qualif.)</th></tr>`;
+    html += `<div class="rs-h"><h3>Fase 3 · captação Estude Comigo</h3><span>cadastros e qualificados = páginas do gerador (banco) · grupo = entrada casada lead a lead (webhook Sendflow) · Lead do pixel só p/ referência</span></div>
+    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto</th><th>Cadastros</th><th>Qualificados</th><th>Entraram no grupo</th><th>R$/entrada</th><th>Fora do grupo</th><th>R$/qualificado</th><th>Lead pixel</th><th>Por conjunto (qualif. → grupo)</th></tr>`;
     for (const i of f3){
       const c = byId[i.id]; let sp=0,px=0; for (const ad of c.ads){ sp+=ad.mes.spend; px+=ad.mes.px_lead; }
-      const q = c.leads_ec_mes||0, cad = c.cadastros_ec_mes||0;
-      const conj = Object.entries(c.ec_conjuntos||{}).sort((a,b)=>b[1].qual-a[1].qual).map(([k,v])=>`${esc(k)} ${v.qual}`).join(" · ");
+      const q = c.leads_ec_mes||0, cad = c.cadastros_ec_mes||0, g = c.grupo_ec_mes||0, fora = Math.max(q-g,0);
+      const conj = Object.entries(c.ec_conjuntos||{}).sort((a,b)=>b[1].qual-a[1].qual).map(([k,v])=>`${esc(k)} ${v.qual} → ${v.grp||0}`).join(" · ");
       html += `<tr><td>${esc(i.frente)}</td><td>${fmtR(sp)}</td><td>${cad}</td><td>${q} <small>(${cad>0?Math.round(q/cad*100):0}%)</small></td>
+        <td class="${q>0 && g/q >= .6 ? "ok" : q>0 && g/q >= .35 ? "mid" : q>0 ? "bad" : ""}"><b>${g}</b> <small>(${q>0?Math.round(g/q*100):0}% dos qualif.)</small></td>
+        <td class="${fx(g>0?sp/g:null,i.faixa.ok*3,i.faixa.stop*3)}"><b>${g>0?fmtCusto(sp/g):"—"}</b></td>
+        <td>${fora} <small>candidatos a resgate</small></td>
         <td class="${fx(q>0?sp/q:null,i.faixa.ok*2,i.faixa.stop*2)}">${q>0?fmtCusto(sp/q):"—"}</td><td><small>${px}</small></td><td><small>${conj||"—"}</small></td></tr>`;
     }
-    html += `</table></div>`;
+    html += `</table></div>
+    <div class="note" style="margin-top:6px">Entrada no grupo = o mesmo lead do cadastro aparece no webhook do Sendflow entrando num grupo da frente depois de se cadastrar. O webhook não registra toda entrada (em 14/09 registrou ~2/3 do que o Sendflow contou nas SEDUCs) — a taxa real tende a ser maior; use como piso. Meta da Fase 2 do plano: grupo ≥ 60% dos qualificados.</div>`;
   }
   // --- disparos Estude Comigo
   const D = RAW.disparos;
@@ -1128,15 +1145,15 @@ function renderResumo(){
       const f = (porFrente[c.frente] ??= { sent:0, skipE:0, skipO:0, pend:0, total:0, camp:[] });
       f.sent += c.sent; f.skipE += c.skipped_existing; f.skipO += c.skipped_optout; f.pend += c.pending; f.total += c.total; f.oo = (f.oo||0) + (c.optout_novos||0); f.camp.push(c);
     }
-    html += `<div class="rs-h"><h3>Disparos · Estude Comigo (WhatsApp via Anne)</h3><span>custo = enviadas × R$ 0,43 (pulados não custam) · cadastros = páginas do Estude Comigo com origem anne-disparo · grupo = entradas registradas pelo Sendflow · custo por lead no grupo = custo ÷ entradas</span></div>
+    html += `<div class="rs-h"><h3>Disparos · Estude Comigo (WhatsApp via Anne)</h3><span>custo = enviadas × R$ 0,43 (pulados não custam) · cadastros = páginas do Estude Comigo com origem anne-disparo · grupo = qualificados do disparo que entraram no grupo (lead a lead, webhook Sendflow — piso) · custo por lead no grupo = custo ÷ entradas</span></div>
     <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Onda / camada</th><th>Template</th><th>Enviadas</th><th>Puladas (conversa ativa)</th><th>Opt-out novos</th><th>Cadastros</th><th>Entraram no grupo</th><th>Custo</th><th>Custo / cadastro</th><th>Custo / lead no grupo</th><th>Previsto</th></tr>`;
     for (const [fk, f] of Object.entries(porFrente)){
-      const cad = D.cadastros?.[fk] || { cad:0, qual:0 }, grp = D.grupo?.[fk] || 0;
+      const cad = D.cadastros?.[fk] || { cad:0, qual:0, grupo:0 }, grp = cad.grupo || 0, grpTotal = D.grupo?.[fk] || 0;
       const custo = f.sent * TARIFA_MSG, prev = PREV_DISPARO[fk];
       html += `<tr><td>${esc(FRENTE_NOME[fk]||fk)}</td><td><b>total</b></td><td><small>${f.camp.length} campanha(s)</small></td><td><b>${f.sent.toLocaleString("pt-BR")}</b>${f.pend?` <small>(+${f.pend} na fila)</small>`:""}</td>
         <td>${f.skipE.toLocaleString("pt-BR")} <small>+${f.skipO} opt-out prévio</small></td><td class="${f.sent>0 && f.oo/f.sent > .03 ? "bad" : "ok"}">${f.oo} <small>(${f.sent>0?(f.oo/f.sent*100).toFixed(1):0}%)</small></td>
         <td class="${f.sent>0 && cad.qual/f.sent >= .02 ? "ok" : f.sent>0 ? "mid" : ""}"><b>${cad.qual}</b> <small>qualif. de ${cad.cad} (${f.sent>0?(cad.qual/f.sent*100).toFixed(1):0}%)</small></td>
-        <td>${grp ? `<b>${grp}</b> <small>(${f.sent>0?(grp/f.sent*100).toFixed(1):0}%)</small>` : `<small>${fk==="TJAM"?"0":"sem webhook"}</small>`}</td>
+        <td>${grp ? `<b>${grp}</b> <small>(${cad.qual>0?Math.round(grp/cad.qual*100):0}% dos qualif. · ${f.sent>0?(grp/f.sent*100).toFixed(1):0}% das msgs)</small>` : `<small>0${grpTotal?` · frente teve ${grpTotal} entradas no total`:""}</small>`}</td>
         <td><b>${fmtR2(custo)}</b></td>
         <td class="${cad.qual>0 && custo/cad.qual <= 10 ? "ok" : cad.qual>0 ? "mid" : ""}">${cad.qual>0 ? fmtCusto(custo/cad.qual) : "—"}</td>
         <td class="${grp>0 && custo/grp <= 10 ? "ok" : grp>0 ? "mid" : ""}"><b>${grp>0 ? fmtCusto(custo/grp) : "—"}</b></td>
@@ -1152,13 +1169,56 @@ function renderResumo(){
     const notas = [];
     for (const [fk, f] of Object.entries(porFrente)){
       if (f.sent < 50) continue;
-      const cad = D.cadastros?.[fk] || { cad:0, qual:0 }, grp = D.grupo?.[fk] || 0, nome = FRENTE_NOME[fk]||fk;
+      const cad = D.cadastros?.[fk] || { cad:0, qual:0, grupo:0 }, grp = cad.grupo || 0, nome = FRENTE_NOME[fk]||fk;
       const tx = cad.qual / f.sent, oo = (f.oo||0) / Math.max(f.sent,1);
       notas.push(`<b>${esc(nome)}</b>: ${(tx*100).toFixed(1)}% de cadastro qualificado por mensagem (gate 2%${tx>=.02?" ✓":" ✗"}) · opt-out ${(oo*100).toFixed(1)}% (gate 3%${oo<=.03?" ✓":" ✗"}) · custo por qualificado ${cad.qual>0?fmtCusto(f.sent*TARIFA_MSG/cad.qual):"—"}${grp?` · custo por entrada no grupo ${fmtCusto(f.sent*TARIFA_MSG/grp)}`:""}${f.skipE>0?` · ${f.skipE} pulados por conversa ativa (voltam após 72h calados)`:""}`);
       const ouro = f.camp.filter(c => /ouro/i.test(c.name)).reduce((a,c)=>a+c.sent,0), base = f.sent - ouro;
       if (ouro && base) notas.push(`<b>${esc(nome)}</b>: ${ouro} mensagens para o ouro do webinário e ${base} para a base — comparar a taxa de cadastro das duas antes de liberar a próxima camada.`);
     }
     if (notas.length) html += `<div class="note" style="margin-top:8px">${notas.join("<br>")}</div>`;
+  }
+  // --- camadas de disparo: o que já foi e o que falta (bases tmp_disparo_* + rascunhos da Anne)
+  if (D && D.camadas && D.camadas.length){
+    const camps = D.campanhas || [];
+    const rows = [];  // {fk, ordem, nome, n, estado, cls, det}
+    const feitoDet = (fk, ondaKey) => {
+      const cs = camps.filter(c => c.frente===fk && (c.onda||"").toLowerCase()===ondaKey.toLowerCase());
+      if (!cs.length) return "disparada";
+      const sent = cs.reduce((a,c)=>a+c.sent,0), d = cs.map(c=>c.started_at).filter(Boolean).sort()[0];
+      return `${ondaKey} · ${sent.toLocaleString("pt-BR")} enviadas${d?" · "+ddmm(d.slice(0,10)):""}`;
+    };
+    for (const r of D.camadas){
+      const fk = r.frente, st = (r.status||"").toLowerCase(), web = /_web$/.test(r.fonte||"");
+      const L = CAMADA_LABEL[fk]?.[web ? "web" : (r.camada||"")] || (web ? "Ouro do webinário" : `Camada ${r.camada||"?"}`);
+      let ondaKey = null; const m1 = st.match(/^onda(\w+)_disparado$/), m2 = st.match(/^camada(\d+)_disparado$/);
+      if (m1) ondaKey = "Onda " + m1[1]; else if (m2) ondaKey = "Camada " + m2[1];
+      let estado, cls;
+      if (ondaKey){ estado = "✅ " + feitoDet(fk, ondaKey); cls = "ok"; }
+      else if (r.camada === "P0"){ estado = "já está no grupo · não dispara"; cls = ""; }
+      else {
+        const drafts = camps.filter(c => c.frente===fk && /draft|scheduled/.test(c.status) && c.pending>0);
+        if (drafts.length && !web) { estado = `📝 rascunho na Anne: ${drafts.map(c=>`${esc(c.onda||"")} (${c.pending.toLocaleString("pt-BR")})`).join(" · ")} — aguardando OK`; cls = "mid"; }
+        else { estado = fk==="POLICIAS" ? "⏳ falta · Fase 3 entra 16/09" : "⏳ falta"; cls = "bad"; }
+      }
+      const ordem = web ? 0 : (CAMADA_ORDEM[r.camada] ?? (parseInt(r.camada,10)||99));
+      rows.push({ fk, ordem, nome: L + (fk==="POLICIAS" && r.onda ? ` · ${esc(r.onda)}` : ""), n: r.n, estado, cls, key: fk+"|"+ordem+"|"+r.onda });
+    }
+    // camadas planejadas que ainda nem têm base montada
+    for (const [fk, lst] of Object.entries(CAMADA_A_MONTAR)) for (const [i, nome] of lst.entries()) rows.push({ fk, ordem: 50+i, nome, n: null, estado: "🧱 base não montada", cls: "bad", key: fk+"|am"+i });
+    // agrega linhas iguais (mesma camada em ondas diferentes — Polícias)
+    const agg = new Map();
+    for (const r of rows){ const k = r.fk+"|"+r.nome+"|"+r.estado; const a = agg.get(k); if (a) a.n += r.n||0; else agg.set(k, {...r}); }
+    const ordemF = ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"];
+    html += `<div class="rs-h"><h3>Camadas de disparo · feito × falta</h3><span>bases tmp_disparo_* no Data Core + campanhas da Anne · próximas ondas só com OK</span></div>
+    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Camada</th><th>Leads</th><th>Estado</th></tr>`;
+    for (const fk of ordemF){
+      const rs = [...agg.values()].filter(r => r.fk===fk).sort((a,b)=>a.ordem-b.ordem);
+      if (!rs.length) continue;
+      const tot = rs.reduce((a,r)=>a+(r.n||0),0), falta = rs.filter(r=>r.cls==="bad"||r.cls==="mid").reduce((a,r)=>a+(r.n||0),0);
+      html += `<tr><td>${esc(FRENTE_NOME[fk]||fk)}</td><td><b>total</b></td><td><b>${tot.toLocaleString("pt-BR")}</b></td><td><small>${falta.toLocaleString("pt-BR")} ainda sem disparo</small></td></tr>`;
+      for (const r of rs) html += `<tr><td></td><td><small>${r.nome}</small></td><td>${r.n!=null?r.n.toLocaleString("pt-BR"):"—"}</td><td class="${r.cls}" style="text-align:left;white-space:normal"><small>${r.estado}</small></td></tr>`;
+    }
+    html += `</table></div>`;
   }
   $("resumo").innerHTML = html || `<p class="muted">sem campanhas ativas com dados</p>`;
 }
@@ -1231,7 +1291,8 @@ function renderInsights(){
     const q = c.leads_ec_mes||0, cad = c.cadastros_ec_mes||0; if (sp < 10) continue;
     const conj = Object.entries(c.ec_conjuntos||{}).sort((a,b)=>b[1].qual-a[1].qual);
     const lider = conj[0] ? `${esc(conj[0][0])} traz ${conj[0][1].qual} dos ${q}` : "";
-    add(q>0 && sp/q <= i.faixa.ok*2 ? "good" : "warn", "🧲", esc(i.frente) + " · Estude Comigo", `${fmtR(sp)} → <b>${q}</b> qualificados de ${cad} cadastros (${q>0?fmtCusto(sp/q):"—"} por qualificado). ${lider}${q > 0 && q/Math.max(diaN-9,1) < 5 ? " — ritmo baixo p/ os encontros: o volume vem dos disparos" : ""}.`);
+    const g = c.grupo_ec_mes||0, fora = Math.max(q-g,0);
+    add(q>0 && sp/q <= i.faixa.ok*2 ? "good" : "warn", "🧲", esc(i.frente) + " · Estude Comigo", `${fmtR(sp)} → <b>${q}</b> qualificados de ${cad} cadastros (${q>0?fmtCusto(sp/q):"—"} por qualificado) → <b>${g}</b> no grupo (${q>0?Math.round(g/q*100):0}% · ${g>0?fmtCusto(sp/g):"—"} por entrada). ${lider}${fora>=10?` — <b>${fora} qualificados ainda fora do grupo</b>: candidatos a um disparo de resgate com o link`:""}${q > 0 && q/Math.max(diaN-9,1) < 5 ? " — ritmo baixo p/ os encontros: o volume vem dos disparos" : ""}.`);
   }
   $("insights").innerHTML = out.map(o => `<div class="in ${o.cls}"><div class="ic">${o.ic}</div><div class="t"><span class="k">${o.k}</span>${o.t}</div></div>`).join("") || `<div class="in info"><div class="ic">⏳</div><div class="t">Sem dados suficientes ainda.</div></div>`;
 }
