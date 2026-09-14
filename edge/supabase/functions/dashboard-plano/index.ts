@@ -68,11 +68,17 @@ const SF_RELEASES: { id: string; frente: string; nome: string; bloqueada?: boole
 type SfGroup = { gid: string; name: string; count: number | null; participantsAmount: number | null; full: boolean | null };
 type SfAnalytics = { add?: { total?: number; dates?: Record<string, number> }; remove?: { total?: number }; clicks?: { total?: number; dates?: Record<string, number> } };
 let SF_CACHE: { t: number; releases: Record<string, unknown>[]; grupos: Record<string, unknown>[] } | null = null;
+let SF_ERRO = "";  // último erro da API (sem segredo), exposto no painel p/ diagnóstico
+let SF_BLOQUEADA_ATE = 0;  // ms — a Sendflow devolve 403 api-key-blocked com retryAfterMs; não insistir antes disso
 const SF_TTL_MS = 10 * 60_000;
 async function sfGet<T>(key: string, path: string): Promise<T | null> {
   const r = await fetch(SENDFLOW_API + path, { headers: { Authorization: "Bearer " + key, Accept: "application/json" } });
   if (r.status === 404) return null;
-  if (!r.ok) throw new Error(`Sendflow ${path} HTTP ${r.status}`);
+  if (!r.ok) {
+    const body = (await r.text()).slice(0, 160);
+    try { const j = JSON.parse(body); if (j?.retryAfterMs) SF_BLOQUEADA_ATE = Date.now() + Number(j.retryAfterMs); } catch { /* corpo não-JSON */ }
+    throw new Error(`Sendflow ${path} HTTP ${r.status}: ${body}`);
+  }
   return await r.json() as T;
 }
 async function lerSendflow(key: string) {
@@ -81,10 +87,11 @@ async function lerSendflow(key: string) {
   const releases: Record<string, unknown>[] = [], grupos: Record<string, unknown>[] = [];
   const at = new Date().toISOString();
   for (const rel of SF_RELEASES) {
-    const [g, a] = await Promise.all([
-      sfGet<{ items?: SfGroup[] } | SfGroup[]>(key, `/releases/${rel.id}/groups`),
-      sfGet<SfAnalytics>(key, `/releases/${rel.id}/analytics`),
-    ]);
+    // em série, com pausa curta — a API bloqueia a chave por 30 min quando recebe rajadas
+    const g = await sfGet<{ items?: SfGroup[] } | SfGroup[]>(key, `/releases/${rel.id}/groups`);
+    await new Promise((res) => setTimeout(res, 400));
+    const a = await sfGet<SfAnalytics>(key, `/releases/${rel.id}/analytics`);
+    await new Promise((res) => setTimeout(res, 400));
     if (!g) continue;                                       // release não existe mais
     const items = Array.isArray(g) ? g : (g.items ?? []);
     for (const it of items) grupos.push({ grupo_gid: it.gid, release_id: rel.id, frente: rel.frente, nome: it.name, ordem: it.count ?? null, participantes: it.participantsAmount ?? 0, cheio: !!it.full, captured_at: at });
@@ -388,17 +395,17 @@ Deno.serve(async (req: Request) => {
       //      tabelas sendflow_*_snapshot, que servem de fallback (API fora / chave ausente).
       (async () => {
         const key = Deno.env.get("SENDFLOW_API_KEY") ?? "";
-        if (key && (!SF_CACHE || Date.now() - SF_CACHE.t > SF_TTL_MS)) {
+        if (key && Date.now() >= SF_BLOQUEADA_ATE && (!SF_CACHE || Date.now() - SF_CACHE.t > SF_TTL_MS)) {
           try {
             const r = await lerSendflow(key);
-            SF_CACHE = { t: Date.now(), ...r };
+            SF_CACHE = { t: Date.now(), ...r }; SF_ERRO = "";
             try {
               if (r.releases.length) await db.from("sendflow_releases_snapshot").upsert(r.releases, { onConflict: "release_id" });
               if (r.grupos.length) await db.from("sendflow_grupos_snapshot").upsert(r.grupos, { onConflict: "grupo_gid" });
             } catch (e) { console.error("sendflow snapshot upsert", e); }
           } catch (e) {
-            console.error("sendflow api", e);
-            if (SF_CACHE) SF_CACHE.t = Date.now() - SF_TTL_MS + 2 * 60_000;   // tenta de novo em 2 min
+            console.error("sendflow api", e); SF_ERRO = String(e).slice(0, 220);
+            if (SF_CACHE) SF_CACHE.t = Date.now() - SF_TTL_MS + 2 * 60_000;   // tenta de novo em 2 min (ou após o bloqueio)
           }
         }
         if (SF_CACHE) return { releases: SF_CACHE.releases, grupos: SF_CACHE.grupos, fonte: "api", erro: null };
@@ -406,7 +413,7 @@ Deno.serve(async (req: Request) => {
           db.from("sendflow_releases_snapshot").select("*").order("frente"),
           db.from("sendflow_grupos_snapshot").select("*").order("release_id").order("ordem"),
         ]);
-        return { releases: rel ?? [], grupos: grp ?? [], fonte: "snapshot", erro: key ? "api indisponível" : "sem SENDFLOW_API_KEY" };
+        return { releases: rel ?? [], grupos: grp ?? [], fonte: "snapshot", erro: key ? ("api indisponível · " + SF_ERRO + (SF_BLOQUEADA_ATE > Date.now() ? ` · chave bloqueada pela Sendflow até ${new Date(SF_BLOQUEADA_ATE - 4 * 3600_000).toISOString().slice(11, 16)} (Manaus)` : "")) : "sem SENDFLOW_API_KEY" };
       })(),
     ]);
 
