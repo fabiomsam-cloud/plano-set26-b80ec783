@@ -53,6 +53,51 @@ const AUD_LABEL: Record<string, string> = {
   POLICIAS: "Polícias AM · Fase 2", PRF: "PRF · Fase 2", POLICIAS_ORG: "Polícias AM · reels orgânicos",
 };
 
+// ---- Sendflow (API REST oficial: https://sendflow.pro/sendapi · Authorization: Bearer <SENDFLOW_API_KEY>)
+// Releases do Estude Comigo por frente. Leitura ao vivo com cache de 10 min; cada leitura boa também é gravada
+// em sendflow_releases_snapshot / sendflow_grupos_snapshot (fallback quando a API falha ou a chave falta).
+const SENDFLOW_API = "https://sendflow.pro/sendapi";
+const SF_RELEASES: { id: string; frente: string; nome: string; bloqueada?: boolean }[] = [
+  { id: "mXoF03n6WZ2bEehyuNt9", frente: "TJAM", nome: "🎯TJ-AM: GRUPO DE ESTUDOS (grupos de agosto · oficial)" },
+  { id: "pHasARlCZ391RSiVkLkr", frente: "TJAM", nome: "ESTUDE COMIGO TJ-AM", bloqueada: true },
+  { id: "HChLcxInLc0aWS8ORS98", frente: "SEDUC_AM", nome: "ESTUDE COMIGO SEDUC-AM" },
+  { id: "KLE3SEidOXAu1OzY24gi", frente: "SEDUC_PA", nome: "ESTUDE COMIGO SEDUC-PA" },
+  { id: "fRiCa8jorZXLuQq20ywu", frente: "POLICIAS", nome: "ESTUDE COMIGO POLÍCIAS AM" },
+  { id: "1KA9so23JVS0o7A9AZyR", frente: "PRF", nome: "ESTUDE COMIGO PRF" },
+];
+type SfGroup = { gid: string; name: string; count: number | null; participantsAmount: number | null; full: boolean | null };
+type SfAnalytics = { add?: { total?: number; dates?: Record<string, number> }; remove?: { total?: number }; clicks?: { total?: number; dates?: Record<string, number> } };
+let SF_CACHE: { t: number; releases: Record<string, unknown>[]; grupos: Record<string, unknown>[] } | null = null;
+const SF_TTL_MS = 10 * 60_000;
+async function sfGet<T>(key: string, path: string): Promise<T | null> {
+  const r = await fetch(SENDFLOW_API + path, { headers: { Authorization: "Bearer " + key, Accept: "application/json" } });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`Sendflow ${path} HTTP ${r.status}`);
+  return await r.json() as T;
+}
+async function lerSendflow(key: string) {
+  const hoje = hojeManaus();                                // AAAA-MM-DD
+  const ddmmaaaa = hoje.slice(8, 10) + hoje.slice(5, 7) + hoje.slice(0, 4); // chave das datas do analytics
+  const releases: Record<string, unknown>[] = [], grupos: Record<string, unknown>[] = [];
+  const at = new Date().toISOString();
+  for (const rel of SF_RELEASES) {
+    const [g, a] = await Promise.all([
+      sfGet<{ items?: SfGroup[] } | SfGroup[]>(key, `/releases/${rel.id}/groups`),
+      sfGet<SfAnalytics>(key, `/releases/${rel.id}/analytics`),
+    ]);
+    if (!g) continue;                                       // release não existe mais
+    const items = Array.isArray(g) ? g : (g.items ?? []);
+    for (const it of items) grupos.push({ grupo_gid: it.gid, release_id: rel.id, frente: rel.frente, nome: it.name, ordem: it.count ?? null, participantes: it.participantsAmount ?? 0, cheio: !!it.full, captured_at: at });
+    releases.push({
+      release_id: rel.id, frente: rel.frente, nome: rel.nome, bloqueada: !!rel.bloqueada,
+      grupos: items.length, participantes: items.reduce((s, it) => s + (it.participantsAmount ?? 0), 0), grupos_cheios: items.filter((it) => it.full).length,
+      entradas_total: a?.add?.total ?? 0, saidas_total: a?.remove?.total ?? 0, cliques_total: a?.clicks?.total ?? 0,
+      entradas_hoje: a?.add?.dates?.[ddmmaaaa] ?? 0, cliques_hoje: a?.clicks?.dates?.[ddmmaaaa] ?? 0, captured_at: at,
+    });
+  }
+  return { releases, grupos };
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -239,7 +284,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sfReleases, sfGrupos] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -339,8 +384,30 @@ Deno.serve(async (req: Request) => {
       })(),
       // (13) Snapshot da Sendflow (releases/grupos do Estude Comigo) — gravado pela tarefa agendada "sendflow-snapshot-ec"
       //      (a API da Sendflow só é alcançável pelo conector do app; sem chave no servidor)
-      (async () => { const { data } = await db.from("sendflow_releases_snapshot").select("*").order("frente"); return data ?? []; })(),
-      (async () => { const { data } = await db.from("sendflow_grupos_snapshot").select("*").order("release_id").order("ordem"); return data ?? []; })(),
+      // (13) Sendflow — API REST oficial (secret SENDFLOW_API_KEY), cache 10 min; leitura boa é espelhada nas
+      //      tabelas sendflow_*_snapshot, que servem de fallback (API fora / chave ausente).
+      (async () => {
+        const key = Deno.env.get("SENDFLOW_API_KEY") ?? "";
+        if (key && (!SF_CACHE || Date.now() - SF_CACHE.t > SF_TTL_MS)) {
+          try {
+            const r = await lerSendflow(key);
+            SF_CACHE = { t: Date.now(), ...r };
+            try {
+              if (r.releases.length) await db.from("sendflow_releases_snapshot").upsert(r.releases, { onConflict: "release_id" });
+              if (r.grupos.length) await db.from("sendflow_grupos_snapshot").upsert(r.grupos, { onConflict: "grupo_gid" });
+            } catch (e) { console.error("sendflow snapshot upsert", e); }
+          } catch (e) {
+            console.error("sendflow api", e);
+            if (SF_CACHE) SF_CACHE.t = Date.now() - SF_TTL_MS + 2 * 60_000;   // tenta de novo em 2 min
+          }
+        }
+        if (SF_CACHE) return { releases: SF_CACHE.releases, grupos: SF_CACHE.grupos, fonte: "api", erro: null };
+        const [{ data: rel }, { data: grp }] = await Promise.all([
+          db.from("sendflow_releases_snapshot").select("*").order("frente"),
+          db.from("sendflow_grupos_snapshot").select("*").order("release_id").order("ordem"),
+        ]);
+        return { releases: rel ?? [], grupos: grp ?? [], fonte: "snapshot", erro: key ? "api indisponível" : "sem SENDFLOW_API_KEY" };
+      })(),
     ]);
 
     // ---- Entradas nos grupos do Estude Comigo por lead (releases do Sendflow por frente)
@@ -583,7 +650,7 @@ Deno.serve(async (req: Request) => {
         }, {} as Record<string, number>),
       },
       bio,                     // leads do link da bio @deltafabiosilva (insumo Fase 2/3 Polícias/PRF)
-      sendflow: { releases: sfReleases, grupos: sfGrupos },  // pessoas nos grupos por projeto (snapshot)
+      sendflow,                // pessoas nos grupos por projeto — API REST da Sendflow (cache 10 min) c/ fallback snapshot
     });
   } catch (e) {
     return json({ error: String(e) }, 500);

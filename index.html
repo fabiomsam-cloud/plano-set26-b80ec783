@@ -1229,7 +1229,8 @@ function renderResumo(){
     const lastAt = SF.releases.map(r=>r.captured_at).sort().pop();
     const idadeMin = lastAt ? Math.round((Date.now()-Date.parse(lastAt))/60000) : null;
     const quando = lastAt ? new Date(lastAt).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
-    html += `<div class="rs-h"><h3>Pessoas nos grupos · Sendflow</h3><span>leitura ${quando}${idadeMin!=null && idadeMin>180?` <b style="color:var(--amber)">(há ${Math.round(idadeMin/60)}h — atualiza com o app aberto)</b>`:""} · participantes incluem as contas admin · entradas/saídas = analytics da release</span></div>
+    const fonteTxt = SF.fonte==="api" ? "API da Sendflow ao vivo (cache 10 min)" : `último snapshot${SF.erro?` · <b style="color:var(--amber)">${esc(SF.erro)}</b>`:""}`;
+    html += `<div class="rs-h"><h3>Pessoas nos grupos · Sendflow</h3><span>${fonteTxt} · leitura ${quando}${idadeMin!=null && idadeMin>180?` <b style="color:var(--amber)">(há ${Math.round(idadeMin/60)}h)</b>`:""} · participantes incluem as contas admin · entradas/saídas = analytics da release</span></div>
     <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Release</th><th>Grupos</th><th>Pessoas</th><th>Cheios</th><th>Entradas hoje</th><th>Entradas total</th><th>Saídas total</th><th>Por grupo</th></tr>`;
     for (const fk of ordemF){
       const rs = SF.releases.filter(r=>r.frente===fk); if (!rs.length) continue;
