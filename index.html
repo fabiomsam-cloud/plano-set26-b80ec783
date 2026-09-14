@@ -1192,6 +1192,8 @@ function renderResumo(){
       const L = CAMADA_LABEL[fk]?.[web ? "web" : (r.camada||"")] || (web ? "Ouro do webinário" : `Camada ${r.camada||"?"}`);
       let ondaKey = null; const m1 = st.match(/^onda(\w+)_disparado$/), m2 = st.match(/^camada(\d+)_disparado$/);
       if (m1) ondaKey = "Onda " + m1[1]; else if (m2) ondaKey = "Camada " + m2[1];
+      // sub-onda por camada (P1a → "Onda 1a"): a base marca só o número da onda
+      if (ondaKey && /^P\d[a-z]$/.test(r.camada||"") && !/[a-z]$/.test(ondaKey)) ondaKey += r.camada.slice(-1);
       let estado, cls;
       if (ondaKey){ estado = "✅ " + feitoDet(fk, ondaKey); cls = "ok"; }
       else if (r.camada === "P0"){ estado = "já está no grupo · não dispara"; cls = ""; }
