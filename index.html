@@ -281,6 +281,7 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
 <!-- ============ ABAS ============ -->
 <div class="page-tabs">
   <button class="ptab on" data-tab="painel">📊 Painel</button>
+  <button class="ptab" data-tab="gasto">💰 Gasto</button>
   <button class="ptab" data-tab="trafego">🚦 Tráfego</button>
 </div>
 
@@ -410,6 +411,17 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
 </div><!-- /tab-painel -->
 
 <!-- ============ ABA TRÁFEGO ============ -->
+<div id="tab-gasto" hidden>
+<div class="card" style="margin-bottom:12px">
+  <div class="card-head">
+    <div><h2>💰 Gasto — plano v33 × executado</h2>
+      <div class="hint">Verba de Setembro v33 (10/09) por ação: o que o plano reservou para o mês, o que ele previa ter gasto até hoje, o executado (Meta + disparos), a diferença e o que resta. Atualiza junto com o painel.</div>
+    </div>
+  </div>
+  <div id="gasto"><p class="muted">carregando…</p></div>
+</div>
+</div>
+
 <div id="tab-trafego" hidden>
 
 <div class="card" style="margin-bottom:12px">
@@ -658,11 +670,184 @@ function renderCal(){
 }
 renderCal();
 
+
+/* ================= ABA GASTO — Plano de Verba v33 × executado ================= */
+// Plano v33 (10/09) por linha. ate09 = já gasto de 01 a 09/09 segundo o plano; diaria vale de 10 a 30/09 salvo ini/fim.
+// Disparo por frente no v33 foi repartido: captação do webinário (1b) × grupo + Estude Comigo + carrinho (4b), msgs × R$ 0,43.
+const V33 = {
+  web: {
+    TJAM:     { mes:10204, ate09:2224, diaria:380 },
+    SEDUC_AM: { mes:5014,  ate09:394,  diaria:220 },
+    SEDUC_PA: { mes:4148,  ate09:1103, diaria:145 },
+    PRF:      { mes:4243,  ate09:1933, diaria:110, obs:"ingresso encerrado 10/09 — os R$ 2.310 restantes foram para as Fases 2 e 3 da PRF" },
+  },
+  webDisp:  { TJAM:1720, SEDUC_AM:1634, SEDUC_PA:0, PRF:1376 },   // 4.000 · 3.800 · 0 · 3.200 msgs
+  blindado: {
+    TJAM:{ mes:2763, ate09:733, diaria:97 }, SEDUC_AM:{ mes:2763, ate09:733, diaria:97 }, SEMSA:{ mes:2763, ate09:733, diaria:97 },
+    SEDUC_PA:{ mes:0, ate09:0, diaria:0, obs:"sem verba no plano" }, MANAUSPREV:{ mes:49, ate09:49, diaria:0, obs:"encerrada 02/09" },
+  },
+  blindadoDisp: 1290,
+  fase2: {
+    TJAM:{ mes:400, diaria:50, ini:"2026-09-11", fim:"2026-09-18" }, SEDUC_AM:{ mes:400, diaria:50, ini:"2026-09-11", fim:"2026-09-18" },
+    SEDUC_PA:{ mes:400, diaria:50, ini:"2026-09-11", fim:"2026-09-18" }, POLICIAS:{ mes:1500, diaria:150, ini:"2026-09-11", fim:"2026-09-20" },
+    PRF:{ mes:400, diaria:50, ini:"2026-09-18", fim:"2026-09-25" },
+  },
+  fase3: {
+    TJAM:{ mes:500, diaria:100, ini:"2026-09-19", fim:"2026-09-23" }, SEDUC_AM:{ mes:500, diaria:100, ini:"2026-09-20", fim:"2026-09-24" },
+    SEDUC_PA:{ mes:500, diaria:100, ini:"2026-09-21", fim:"2026-09-25" },
+    POLICIAS:{ mes:1550, diaria:100, ini:"2026-09-18", fim:"2026-09-25", mais:{ diaria:150, ini:"2026-09-26", fim:"2026-09-30" } },
+    PRF:{ mes:400, diaria:100, ini:"2026-09-27", fim:"2026-09-30" },
+  },
+  fase3Disp: { TJAM:3268, SEDUC_AM:2150, SEDUC_PA:2752, POLICIAS:7740, PRF:1634 },  // grupo + Estude Comigo + carrinho
+  pp: { mes:4000, ate09:1144, diaria:136, share:0.5 },   // nossa metade da conta SPOTFABIO
+  ppDisp: 2460,
+  pos: { DP:{ mes:4915, nome:"Pós em Direito Policial" }, GP:{ mes:2335, nome:"Pós em Gestão Pública" } },
+  audiencia: { mes:12033, diaria:573 },   // distribuição 9.030 + atração 3.003, a partir de 10/09
+  totais: { meta:55686, disparo:35119, imposto:7701, imposto_pct:0.1383, outros:11994, envelope:110500, teto_dia:1909 },
+};
+const diasEntre = (a, b) => Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / 86400e3) + 1);
+function previstoV33(l, hoje){
+  if (!l) return 0;
+  let v = l.ate09 || 0;
+  const ini = l.ini || "2026-09-10", fim = l.fim || "2026-09-30";
+  if (hoje >= ini) v += (l.diaria||0) * diasEntre(ini, hoje < fim ? hoje : fim);
+  if (l.mais && hoje >= l.mais.ini) v += l.mais.diaria * diasEntre(l.mais.ini, hoje < l.mais.fim ? hoje : l.mais.fim);
+  return Math.min(v, l.mes ?? v);
+}
+function frenteNome(n){
+  if (/TJAM|TJ[\s_-]?AM|TRIBUNA/.test(n)) return "TJAM";
+  if (/SEDUCAM|SEDUC[\s_-]?AM/.test(n)) return "SEDUC_AM";
+  if (/SEDUCPA|SEDUC[\s_-]?PA/.test(n)) return "SEDUC_PA";
+  if (/SEMSA/.test(n)) return "SEMSA";
+  if (/MANAUSPREV/.test(n)) return "MANAUSPREV";
+  if (/POLIC/.test(n)) return "POLICIAS";
+  if (/PRF/.test(n)) return "PRF";
+  return "OUTRAS";
+}
+// bloco × frente de cada campanha Meta (pelo nome e conta)
+function gastoClassificar(nome, conta){
+  const n = (nome||"").toUpperCase(), c = (conta||"").toUpperCase();
+  if (/FASE2/.test(n)) return { bloco:"fase2", frente:frenteNome(n) };
+  if (/FASE3/.test(n)) return { bloco:"fase3", frente:frenteNome(n) };
+  if (/BLINDADO|PERP[EÉ]TUO/.test(n)) return { bloco:"blindado", frente:frenteNome(n) };
+  if (/SPOTFABIO/.test(c) || /PLAYPASSEI|PLAY PASSEI|\[PP\]/.test(n)) return { bloco:"pp", frente:/VSL VERTICAL/.test(n) ? "CLAUDE" : "TRAFEGO" };
+  if (/PROFISS[ÃA]O_PRF|PV07|PV11/.test(n) || (/PRF/.test(n) && /INGRESSO|19,90/.test(n))) return { bloco:"web", frente:"PRF" };
+  if (/\[WEB\]|CADASTRO|WEBIN/.test(n)) return { bloco:"web", frente:frenteNome(n) };
+  return { bloco:"outras", frente:frenteNome(n) };
+}
+// bloco × frente de cada campanha de disparo da Anne (nome + agente)
+function dispClassificar(c){
+  const n = (c.name||"").toUpperCase(), a = (c.agent_slug||"").toLowerCase();
+  const fr = c.frente && c.frente !== "OUTRAS" ? c.frente
+    : (/tjam/.test(a) ? "TJAM" : /seduc_am|seducam/.test(a) ? "SEDUC_AM" : /seduc_pa|seducpa/.test(a) ? "SEDUC_PA" : /semsa/.test(a) ? "SEMSA" : /polic/.test(a) ? "POLICIAS" : /prf/.test(a) ? "PRF" : "OUTRAS");
+  if (/^EC /.test(n)) return { bloco:"fase3", frente:fr };                 // captação para os grupos
+  if (/^WEBIN|^RESGATE/.test(n)) return { bloco:"web", frente:fr };        // captação do webinário (Vade TJ etc.)
+  if (/^BLINDADO/.test(n)) return { bloco:"blindado", frente:fr };
+  if (/P[ÓO]S/.test(n) || /^pos_/.test(a)) return { bloco:"pos", frente:/POLICIAL/.test(n) || /policial/.test(a) ? "DP" : "GP" };
+  if (/PLAY|\bPP\b/.test(n) || /play/.test(a)) return { bloco:"pp", frente:"PP" };
+  return { bloco:"outras", frente:fr };
+}
+function renderGasto(){
+  const box = $("gasto"); if (!box) return;
+  const hoje = hojeManaus();
+  const meta = {}, disp = {}, dispMsgs = {};
+  const add = (o, b, f, v) => { (o[b] ??= {}); o[b][f] = (o[b][f]||0) + v; };
+  for (const r of (RAW.meta_spend||[])){ if (r.period_start < "2026-09-01") continue; const k = gastoClassificar(r.campaign_name, r.ad_account_name); add(meta, k.bloco, k.frente, Number(r.spend||0)); }
+  for (const c of (RAW.disparos?.todas||[])){ const k = dispClassificar(c); add(disp, k.bloco, k.frente, (c.sent||0)*TARIFA_MSG); add(dispMsgs, k.bloco, k.frente, c.sent||0); }
+  const g = (o,b,f) => (o[b]?.[f]) || 0, soma = o => Object.values(o||{}).reduce((a,v)=>a+v,0);
+  const NOME = { ...FRENTE_NOME, SEMSA:"SEMSA Manaus", MANAUSPREV:"ManausPrev" };
+  const pct = (e,p) => p>0 ? Math.round(e/p*100)+"%" : (e>0 ? "—" : "0%");
+  const clsCons = (e,p) => p>0 && e>p ? "bad" : "";
+  const clsDif = d => d > 1 ? "mid" : d < -1 ? "ok" : "";
+  const sR = v => (v<0?"−":"") + fmtR(Math.abs(v));
+  const sDif = v => Math.abs(v) < 1 ? "R$ 0" : (v>0?"+":"−") + fmtR(Math.abs(v));
+  const H = ddmm(hoje);
+  let html = `<div class="note" style="margin:0 0 6px"><b>Como ler:</b> Plano = Verba de Setembro v33 (10/09), mês inteiro · <b>Previsto até ${H}</b> = diária do v33 × dias corridos (o que o plano esperava ter gasto até hoje) · Executado = Meta pelos insights diários desde 01/09 (${H} parcial) e disparos = enviadas × R$ 0,43 · Diferença = executado − previsto (+ = acima do plano) · Resta = plano − executado (negativo = linha estourada) · Consumido = executado ÷ plano.</div>`;
+  const tabelaMeta = (titulo, sub, linhas) => {
+    let h = `<div class="rs-h"><h3>${titulo}</h3><span>${sub}</span></div><div class="rs-wrap"><table class="rs"><tr><th>Linha</th><th>Plano mês</th><th>Previsto até ${H}</th><th>Executado</th><th>Diferença</th><th>Resta no mês</th><th>Consumido</th></tr>`;
+    const T = {plano:0, prev:0, exec:0};
+    for (const l of linhas){ const dif = l.exec - l.previsto, resta = l.plano - l.exec; T.plano += l.plano; T.prev += l.previsto; T.exec += l.exec;
+      h += `<tr><td>${l.nome}${l.obs?`<br><small>${esc(l.obs)}</small>`:""}</td><td>${fmtR(l.plano)}</td><td>${fmtR(l.previsto)}</td><td><b>${fmtR(l.exec)}</b></td><td class="${clsDif(dif)}">${sDif(dif)}</td><td class="${resta<0?"bad":""}">${sR(resta)}</td><td class="${clsCons(l.exec,l.plano)}">${pct(l.exec,l.plano)}</td></tr>`; }
+    const dif = T.exec - T.prev, resta = T.plano - T.exec;
+    h += `<tr><td><b>Total</b></td><td><b>${fmtR(T.plano)}</b></td><td><b>${fmtR(T.prev)}</b></td><td><b>${fmtR(T.exec)}</b></td><td class="${clsDif(dif)}"><b>${sDif(dif)}</b></td><td class="${resta<0?"bad":""}"><b>${sR(resta)}</b></td><td class="${clsCons(T.exec,T.plano)}"><b>${pct(T.exec,T.plano)}</b></td></tr></table></div>`;
+    return { h, T };
+  };
+  const tabelaDisp = (titulo, sub, linhas) => {
+    let h = `<div class="rs-h"><h3>${titulo}</h3><span>${sub}</span></div><div class="rs-wrap"><table class="rs"><tr><th>Linha</th><th>Plano mês</th><th>Executado</th><th>Mensagens</th><th>Resta no mês</th><th>Consumido</th></tr>`;
+    const T = {plano:0, exec:0, msgs:0};
+    for (const l of linhas){ const resta = l.plano - l.exec; T.plano += l.plano; T.exec += l.exec; T.msgs += l.msgs||0;
+      h += `<tr><td>${l.nome}${l.obs?`<br><small>${esc(l.obs)}</small>`:""}</td><td>${fmtR(l.plano)}</td><td><b>${fmtR2(l.exec)}</b></td><td>${(l.msgs||0).toLocaleString("pt-BR")}</td><td class="${resta<0?"bad":""}">${sR(resta)}</td><td class="${clsCons(l.exec,l.plano)}">${pct(l.exec,l.plano)}</td></tr>`; }
+    const resta = T.plano - T.exec;
+    h += `<tr><td><b>Total</b></td><td><b>${fmtR(T.plano)}</b></td><td><b>${fmtR2(T.exec)}</b></td><td><b>${T.msgs.toLocaleString("pt-BR")}</b></td><td class="${resta<0?"bad":""}"><b>${sR(resta)}</b></td><td class="${clsCons(T.exec,T.plano)}"><b>${pct(T.exec,T.plano)}</b></td></tr></table></div>`;
+    return { h, T };
+  };
+  // 1 · webinários
+  const w  = tabelaMeta("1 · Webinários (Fase 1) · Meta", "campanha de cadastro do webinário + testes de criativo da frente · PRF = ingresso pago",
+    ["TJAM","SEDUC_AM","SEDUC_PA","PRF"].map(f => ({ nome: NOME[f], plano: V33.web[f].mes, previsto: previstoV33(V33.web[f], hoje), exec: g(meta,"web",f), obs: V33.web[f].obs })));
+  const wd = tabelaDisp("1b · Webinários · disparo de captação", "convite ao webinário (Vade TJ, resgates) e convite ao ingresso PRF — NÃO entra na Fase 3",
+    ["TJAM","SEDUC_AM","SEDUC_PA","PRF"].map(f => ({ nome: NOME[f], plano: V33.webDisp[f], exec: g(disp,"web",f), msgs: g(dispMsgs,"web",f), obs: f==="SEDUC_PA" ? "sem disparo de captação no plano (base do Pará vem só do tráfego)" : "" })));
+  // 2 · blindado
+  const bl = tabelaMeta("2 · Blindado (venda direta) · Meta", "v33: R$ 290/dia para TJ-AM, SEDUC-AM e SEMSA juntos · inclui as campanhas [PERPÉTUO] antigas do gestor",
+    ["TJAM","SEDUC_AM","SEMSA","SEDUC_PA","MANAUSPREV"].map(f => ({ nome: NOME[f], plano: V33.blindado[f].mes, previsto: previstoV33(V33.blindado[f], hoje), exec: g(meta,"blindado",f), obs: V33.blindado[f].obs })));
+  const bd = tabelaDisp("2b · Blindado · disparo", "checkout blindado dos 3 concursos + carrinho abandonado do webinário",
+    [{ nome:"Blindado (3 concursos)", plano: V33.blindadoDisp, exec: soma(disp.blindado), msgs: soma(dispMsgs.blindado) }]);
+  // 3 · fase 2
+  const f2 = tabelaMeta("3 · Fase 2 · vídeos 75% · Meta", "v33: R$ 50/dia por frente de 11 a 18/09 · Polícias R$ 150/dia de 11 a 20/09 · PRF a partir de 18/09 — as decisões de 10 e 14/09 subiram as diárias e o v33 não foi reescrito",
+    ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"].map(f => ({ nome: NOME[f], plano: V33.fase2[f].mes, previsto: previstoV33(V33.fase2[f], hoje), exec: g(meta,"fase2",f) })));
+  // 4 · fase 3
+  const f3 = tabelaMeta("4 · Fase 3 · captação do público quente · Meta", "v33 só previa a Fase 3 na Meta a partir de 18/09; foi antecipada para 10/09 · Polícias e PRF entram em 15/09",
+    ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"].map(f => ({ nome: NOME[f] + (f==="POLICIAS"||f==="PRF" ? " (início 15/09)" : ""), plano: V33.fase3[f].mes, previsto: previstoV33(V33.fase3[f], hoje), exec: g(meta,"fase3",f) })));
+  const f3d = tabelaDisp("4b · Fase 3 · disparos de captação para os grupos", "só as campanhas \"EC\" (convite ao grupo, Estude Comigo, carrinho) — a captação do webinário fica na 1b",
+    ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"].map(f => ({ nome: NOME[f], plano: V33.fase3Disp[f], exec: g(disp,"fase3",f), msgs: g(dispMsgs,"fase3",f) })));
+  // 5 · play passei
+  const ppC = g(meta,"pp","CLAUDE"), ppT = g(meta,"pp","TRAFEGO"), ppConta = ppC + ppT, ppExec = ppConta * V33.pp.share, ppPrev = previstoV33(V33.pp, hoje);
+  const ppDif = ppExec - ppPrev, ppResta = V33.pp.mes - ppExec;
+  const pph = `<div class="rs-h"><h3>5 · Play Passei · Meta (nossa metade da conta SPOTFABIO)</h3><span>a conta é dividida com o Gustav; o plano só conta a nossa metade (${Math.round(V33.pp.share*100)}%)</span></div>
+    <div class="rs-wrap"><table class="rs"><tr><th>Linha</th><th>Plano mês</th><th>Previsto até ${H}</th><th>Executado (nossa metade)</th><th>Conta inteira</th><th>Diferença</th><th>Resta no mês</th><th>Consumido</th></tr>
+    <tr><td>Campanha Claude (VSL vertical, desde 11/09)</td><td><small>dentro dos ${fmtR(V33.pp.mes)}</small></td><td>—</td><td><b>${fmtR(ppC*V33.pp.share)}</b></td><td>${fmtR(ppC)}</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Campanhas do tráfego (antigas)</td><td><small>dentro dos ${fmtR(V33.pp.mes)}</small></td><td>—</td><td><b>${fmtR(ppT*V33.pp.share)}</b></td><td>${fmtR(ppT)}</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td><b>Total</b></td><td><b>${fmtR(V33.pp.mes)}</b></td><td><b>${fmtR(ppPrev)}</b></td><td><b>${fmtR(ppExec)}</b></td><td><b>${fmtR(ppConta)}</b></td><td class="${clsDif(ppDif)}"><b>${sDif(ppDif)}</b></td><td class="${ppResta<0?"bad":""}"><b>${sR(ppResta)}</b></td><td class="${clsCons(ppExec,V33.pp.mes)}"><b>${pct(ppExec,V33.pp.mes)}</b></td></tr></table></div>`;
+  const ppd = tabelaDisp("5b · Play Passei · disparo", "base sem o produto + reativação dos parados", [{ nome:"Play Passei", plano: V33.ppDisp, exec: g(disp,"pp","PP"), msgs: g(dispMsgs,"pp","PP") }]);
+  // 6 · pós
+  const pos = tabelaDisp("6 · Pós-graduação · disparo", "VSL da pós em Direito Policial (base policial) · Gestão Pública (alunos Elite AM) — só disparo, sem Meta",
+    ["DP","GP"].map(f => ({ nome: V33.pos[f].nome, plano: V33.pos[f].mes, exec: g(disp,"pos",f), msgs: g(dispMsgs,"pos",f) })));
+  // 7 · fechamento
+  const audPrev = previstoV33(V33.audiencia, hoje), outrasMeta = soma(meta.outras), outrasDisp = soma(disp.outras);
+  const metaExec = w.T.exec + bl.T.exec + f2.T.exec + f3.T.exec + ppExec + outrasMeta;
+  const metaPrev = w.T.prev + bl.T.prev + f2.T.prev + f3.T.prev + ppPrev + audPrev;
+  const dispExec = wd.T.exec + bd.T.exec + f3d.T.exec + ppd.T.exec + pos.T.exec + outrasDisp;
+  const imp = metaExec * V33.totais.imposto_pct, impPrev = metaPrev * V33.totais.imposto_pct;
+  const envExec = metaExec + dispExec + imp, envPrev = metaPrev + impPrev;
+  const linha = (nome, plano, prev, exec, obs) => { const dif = prev==null ? null : exec - prev, resta = plano - exec;
+    return `<tr><td>${nome}${obs?`<br><small>${esc(obs)}</small>`:""}</td><td>${fmtR(plano)}</td><td>${prev==null?"—":fmtR(prev)}</td><td><b>${fmtR(exec)}</b></td><td class="${dif==null?"":clsDif(dif)}">${dif==null?"—":sDif(dif)}</td><td class="${resta<0?"bad":""}">${sR(resta)}</td><td class="${clsCons(exec,plano)}">${pct(exec,plano)}</td></tr>`; };
+  const fech = `<div class="rs-h"><h3>7 · Fechamento do envelope</h3><span>Meta = soma de todos os blocos (Play Passei pela metade) · imposto = 13,83% sobre a Meta executada</span></div>
+    <div class="rs-wrap"><table class="rs"><tr><th>Bloco</th><th>Plano mês</th><th>Previsto até ${H}</th><th>Executado</th><th>Diferença</th><th>Resta no mês</th><th>Consumido</th></tr>
+    ${linha("Meta — tudo (inclui a audiência)", V33.totais.meta, metaPrev, metaExec, outrasMeta>0 ? `inclui ${fmtR(outrasMeta)} em campanhas fora dos blocos acima` : "")}
+    ${linha("&nbsp;&nbsp;↳ Audiência (distribuição + atração)", V33.audiencia.mes, audPrev, 0, "não rodou em setembro")}
+    ${linha("Disparo", V33.totais.disparo, null, dispExec, outrasDisp>0 ? `inclui ${fmtR2(outrasDisp)} fora dos blocos` : "")}
+    ${linha("Imposto Meta 13,83%", V33.totais.imposto, impPrev, imp)}
+    ${linha("Produção, LIG LEAD e contingência", V33.totais.outros, null, 0, "sem apuração no painel")}
+    ${linha("<b>Envelope do mês</b>", V33.totais.envelope, envPrev, envExec)}
+    </table></div>`;
+  // leituras
+  const diasRest = diasEntre(hoje, "2026-09-30") - 1;
+  const metaResta = V33.totais.meta - metaExec, ritmo = diasRest > 0 ? metaResta / diasRest : 0;
+  const f23Plano = f2.T.plano + f3.T.plano, f23Exec = f2.T.exec + f3.T.exec;
+  const notas = [
+    `<b>Meta:</b> ${fmtR(metaExec)} executados contra ${fmtR(metaPrev)} previstos (${sDif(metaExec-metaPrev)}). ${audPrev>0 ? `Sem a audiência, que não rodou (${fmtR(audPrev)} previstos), o restante está ${sDif(metaExec-(metaPrev-audPrev))} em relação ao plano.` : ""} Para gastar os ${fmtR(metaResta)} que restam em ${diasRest} dias a média seria ${fmtR(ritmo)}/dia (teto ${fmtR(V33.totais.teto_dia)}).`,
+    `<b>Fases 2 e 3 na Meta:</b> ${fmtR(f23Exec)} executados sobre ${fmtR(f23Plano)} do v33 (${pct(f23Exec,f23Plano)})${f23Exec>f23Plano ? " — já acima do plano, reflexo das diárias decididas em 10 e 14/09" : ""}.`,
+    `<b>Disparo:</b> ${pct(dispExec, V33.totais.disparo)} do plano (${fmtR(dispExec)} de ${fmtR(V33.totais.disparo)}); ${fmtR(V33.totais.disparo - dispExec)} ainda parados nas camadas grandes, Polícias, PRF, Play Passei e nas duas pós.`,
+  ];
+  html += w.h + wd.h + bl.h + bd.h + f2.h + f3.h + f3d.h + pph + ppd.h + pos.h + fech + `<div class="note" style="margin-top:10px">${notas.join("<br>")}</div>`;
+  box.innerHTML = html;
+}
+
 /* ================= ABAS + CHECKLIST (aba Tráfego) ================= */
 document.querySelectorAll(".page-tabs .ptab").forEach(b => b.onclick = () => {
   document.querySelectorAll(".page-tabs .ptab").forEach(x => x.classList.toggle("on", x === b));
   document.getElementById("tab-painel").hidden = b.dataset.tab !== "painel";
   document.getElementById("tab-trafego").hidden = b.dataset.tab !== "trafego";
+  document.getElementById("tab-gasto").hidden = b.dataset.tab !== "gasto";
   if (b.dataset.tab === "trafego") loadChecklist();
 });
 
@@ -763,6 +948,7 @@ function renderAll(){
   try { renderInsights(); } catch(e){ $("insights").innerHTML = `<div class="in warn"><div class="ic">⚠️</div><div class="t">Leituras indisponíveis: ${esc(e.message)}</div></div>`; }
   try { renderResumo(); } catch(e){ $("resumo").innerHTML = `<p class="muted">resumo indisponível: ${esc(e.message)}</p>`; }
   try { renderPublicos(); } catch(e){ $("publicos").innerHTML = `<p class="muted">públicos indisponíveis: ${esc(e.message)}</p>`; }
+  try { renderGasto(); } catch(e){ $("gasto").innerHTML = `<p class="muted">aba Gasto indisponível: ${esc(e.message)}</p>`; }
   renderCampanhas();
   renderFunis();
   renderAlertas();

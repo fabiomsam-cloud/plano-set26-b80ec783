@@ -382,8 +382,10 @@ Deno.serve(async (req: Request) => {
       ),
       // (8) Disparos da Anne (espelho n8n ANNE · Disparos Sync, 5 min) — só campanhas do Estude Comigo
       fetchAll((a, b) =>
-        db.from("anne_disparos").select("campaign_id, name, frente, onda, template, status, total, sent, pending, skipped_existing, skipped_optout, failed, optout_novos, started_at, last_sent_at")
-          .ilike("name", "EC %").order("started_at").range(a, b)
+        // TODAS as campanhas de disparo do mês (a aba GASTO classifica: "EC " = captação p/ grupo (Fase 3),
+        // "WEBINÁRIO" = captação do webinário, "BLINDADO" = blindado, "PÓS"/"POS" = pós, "PP"/"PLAY" = Play Passei)
+        db.from("anne_disparos").select("campaign_id, name, frente, agent_slug, onda, template, status, total, sent, pending, skipped_existing, skipped_optout, failed, optout_novos, started_at, last_sent_at")
+          .order("started_at").range(a, b)
       ),
       // (9) Cadastros nas páginas do Estude Comigo vindos de DISPARO (utm_source anne-disparo) desde 14/09
       fetchAll((a, b) =>
@@ -678,7 +680,8 @@ Deno.serve(async (req: Request) => {
       compras_web_dia: comprasDia,
       campanhas,               // análise por campanha/anúncio (Graph API, cache ~10 min)
       disparos: {
-        campanhas: disparos,
+        campanhas: (disparos as { name: string }[]).filter((c) => /^EC /.test(c.name)),  // bloco Estude Comigo (como antes)
+        todas: disparos,                                                                    // aba GASTO
         // cadastros via disparo por frente (utm_campaign das páginas de nutrição: nutricao-<frente>-aula)
         // grupo = qualificados do disparo que entraram no grupo da frente (lead a lead, webhook do Sendflow)
         membros_at: membrosAt || null,   // última leitura da lista de membros da Sendflow
