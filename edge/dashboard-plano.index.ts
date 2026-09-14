@@ -239,7 +239,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -307,6 +307,22 @@ Deno.serve(async (req: Request) => {
           .select("paid_at, net_value, produto_code, utm_content")
           .gte("paid_at", SET_INI_ISO)
           .order("paid_at").range(a, b)
+      ),
+      // (8) Disparos da Anne (espelho n8n ANNE · Disparos Sync, 5 min) — só campanhas do Estude Comigo
+      fetchAll((a, b) =>
+        db.from("anne_disparos").select("campaign_id, name, frente, onda, template, status, total, sent, pending, skipped_existing, skipped_optout, failed, started_at, last_sent_at")
+          .ilike("name", "EC %").order("started_at").range(a, b)
+      ),
+      // (9) Cadastros nas páginas do Estude Comigo vindos de DISPARO (utm_source anne-disparo) desde 14/09
+      fetchAll((a, b) =>
+        db.from("campaign_events").select("event_time, utm_campaign, qualified:raw_payload->>qualified")
+          .eq("event_type", "estude_comigo_lead").ilike("utm_source", "%anne-disparo%")
+          .gte("event_time", "2026-09-14T04:00:00.000Z").order("event_time").range(a, b)
+      ),
+      // (10) Entradas nos grupos do Estude Comigo desde 14/09 (group_events; depende do webhook do Sendflow)
+      fetchAll((a, b) =>
+        db.from("group_events").select("created_at, event_type, groups!inner(name)")
+          .ilike("event_type", "%added%").gte("created_at", "2026-09-14T04:00:00.000Z").order("created_at").range(a, b)
       ),
     ]);
 
@@ -496,6 +512,23 @@ Deno.serve(async (req: Request) => {
       funil_dia: funilDia,     // por contest code canônico (TJAM, SEDUC_PA, SEDUC_AM)
       compras_web_dia: comprasDia,
       campanhas,               // análise por campanha/anúncio (Graph API, cache ~10 min)
+      disparos: {
+        campanhas: disparos,
+        // cadastros via disparo por frente (utm_campaign das páginas de nutrição: nutricao-<frente>-aula)
+        cadastros: (ecCadDisparo as { utm_campaign: string | null; qualified: string | null }[]).reduce((acc, r) => {
+          const c = (r.utm_campaign ?? "").toLowerCase();
+          const f = c.includes("tjam") ? "TJAM" : c.includes("seduc-am") || c.includes("seducam") ? "SEDUC_AM" : c.includes("seduc-pa") || c.includes("seducpa") ? "SEDUC_PA" : "OUTRAS";
+          (acc[f] ??= { cad: 0, qual: 0 }).cad++;
+          if (r.qualified === "true") acc[f].qual++;
+          return acc;
+        }, {} as Record<string, { cad: number; qual: number }>),
+        grupo: (ecGrupo as { groups: { name: string } | null }[]).reduce((acc, r) => {
+          const n = (r.groups?.name ?? "").toUpperCase();
+          const f = /TJ-AM/.test(n) ? "TJAM" : /SEDUC-AM/.test(n) ? "SEDUC_AM" : /SEDUC-PA/.test(n) ? "SEDUC_PA" : /POLIC/.test(n) ? "POLICIAS" : /PRF/.test(n) ? "PRF" : "OUTRAS";
+          acc[f] = (acc[f] ?? 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+      },
       bio,                     // leads do link da bio @deltafabiosilva (insumo Fase 2/3 Polícias/PRF)
     });
   } catch (e) {
