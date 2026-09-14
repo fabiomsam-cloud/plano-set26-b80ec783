@@ -421,7 +421,7 @@ Deno.serve(async (req: Request) => {
           db.from("sendflow_releases_snapshot").select("*").order("frente"),
           db.from("sendflow_grupos_snapshot").select("*").order("release_id").order("ordem"),
         ]);
-        return { releases: rel ?? [], grupos: grp ?? [], fonte: "snapshot", erro: key ? ("api indisponível · " + SF_ERRO + (SF_BLOQUEADA_ATE > Date.now() ? ` · chave bloqueada pela Sendflow até ${new Date(SF_BLOQUEADA_ATE - 4 * 3600_000).toISOString().slice(11, 16)} (Manaus)` : "")) : "sem SENDFLOW_API_KEY" };
+        return { releases: rel ?? [], grupos: grp ?? [], fonte: "snapshot", erro: key ? ("api indisponível · " + SF_ERRO + (SF_BLOQUEADA_ATE > Date.now() ? ` · chave bloqueada pela Sendflow até ${(() => { const d = new Date(SF_BLOQUEADA_ATE - 4 * 3600_000).toISOString(); return d.slice(8, 10) + "/" + d.slice(5, 7) + " " + d.slice(11, 16); })()} (Manaus)` : "")) : "sem SENDFLOW_API_KEY" };
       })(),
     ]);
 
