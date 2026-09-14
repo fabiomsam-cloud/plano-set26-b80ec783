@@ -1126,22 +1126,22 @@ function renderResumo(){
     const porFrente = {};
     for (const c of D.campanhas){
       const f = (porFrente[c.frente] ??= { sent:0, skipE:0, skipO:0, pend:0, total:0, camp:[] });
-      f.sent += c.sent; f.skipE += c.skipped_existing; f.skipO += c.skipped_optout; f.pend += c.pending; f.total += c.total; f.camp.push(c);
+      f.sent += c.sent; f.skipE += c.skipped_existing; f.skipO += c.skipped_optout; f.pend += c.pending; f.total += c.total; f.oo = (f.oo||0) + (c.optout_novos||0); f.camp.push(c);
     }
     html += `<div class="rs-h"><h3>Disparos · Estude Comigo (WhatsApp via Anne)</h3><span>enviadas = template entregue ao motor · cadastros = páginas do Estude Comigo com origem anne-disparo · grupo = entradas registradas pelo Sendflow</span></div>
-    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Onda / camada</th><th>Template</th><th>Enviadas</th><th>Puladas</th><th>Opt-out</th><th>Cadastros</th><th>Entraram no grupo</th><th>Custo</th><th>Previsto</th></tr>`;
+    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Onda / camada</th><th>Template</th><th>Enviadas</th><th>Puladas (conversa ativa)</th><th>Opt-out novos</th><th>Cadastros</th><th>Entraram no grupo</th><th>Custo</th><th>Previsto</th></tr>`;
     for (const [fk, f] of Object.entries(porFrente)){
       const cad = D.cadastros?.[fk] || { cad:0, qual:0 }, grp = D.grupo?.[fk] || 0;
       const custo = f.sent * TARIFA_MSG, prev = PREV_DISPARO[fk];
       html += `<tr><td>${esc(FRENTE_NOME[fk]||fk)}</td><td><b>total</b></td><td><small>${f.camp.length} campanha(s)</small></td><td><b>${f.sent.toLocaleString("pt-BR")}</b>${f.pend?` <small>(+${f.pend} na fila)</small>`:""}</td>
-        <td>${f.skipE.toLocaleString("pt-BR")}</td><td class="${f.sent>0 && f.skipO/(f.sent+f.skipO) > .03 ? "bad" : "ok"}">${f.skipO} <small>(${f.sent+f.skipO>0?(f.skipO/(f.sent+f.skipO)*100).toFixed(1):0}%)</small></td>
+        <td>${f.skipE.toLocaleString("pt-BR")} <small>+${f.skipO} opt-out prévio</small></td><td class="${f.sent>0 && f.oo/f.sent > .03 ? "bad" : "ok"}">${f.oo} <small>(${f.sent>0?(f.oo/f.sent*100).toFixed(1):0}%)</small></td>
         <td class="${f.sent>0 && cad.qual/f.sent >= .02 ? "ok" : f.sent>0 ? "mid" : ""}"><b>${cad.qual}</b> <small>qualif. de ${cad.cad} (${f.sent>0?(cad.qual/f.sent*100).toFixed(1):0}%)</small></td>
         <td>${grp ? `<b>${grp}</b> <small>(${f.sent>0?(grp/f.sent*100).toFixed(1):0}%)</small>` : `<small>${fk==="TJAM"?"0":"sem webhook"}</small>`}</td>
         <td><b>${fmtR2(custo)}</b></td><td>${prev!=null ? `${fmtR(prev)} <small>(${Math.round(custo/prev*100)}%)</small>` : "<small>a definir</small>"}</td></tr>`;
       for (const c of f.camp.sort((a,b)=>(a.started_at||"").localeCompare(b.started_at||""))){
         const tipo = /video/.test(c.template) ? "vídeo" : /imagem/.test(c.template) ? "imagem" : "texto";
         html += `<tr><td></td><td><small>${esc(c.onda||"—")} · ${esc(c.name.split("·").slice(2).join("·").trim().slice(0,38))}</small></td><td><small>${tipo}</small></td>
-          <td>${c.sent.toLocaleString("pt-BR")}${c.pending?` <small>(+${c.pending})</small>`:""}</td><td>${c.skipped_existing}</td><td>${c.skipped_optout}</td><td colspan="2"><small>${c.status}${c.started_at?" · "+ddmm(c.started_at.slice(0,10))+" "+c.started_at.slice(11,16):""}</small></td><td><small>${fmtR2(c.sent*TARIFA_MSG)}</small></td><td></td></tr>`;
+          <td>${c.sent.toLocaleString("pt-BR")}${c.pending?` <small>(+${c.pending})</small>`:""}</td><td>${c.skipped_existing} <small>+${c.skipped_optout}</small></td><td>${c.optout_novos||0}</td><td colspan="2"><small>${c.status}${c.started_at?" · "+ddmm(c.started_at.slice(0,10))+" "+c.started_at.slice(11,16):""}</small></td><td><small>${fmtR2(c.sent*TARIFA_MSG)}</small></td><td></td></tr>`;
       }
     }
     html += `</table></div>`;
@@ -1150,7 +1150,7 @@ function renderResumo(){
     for (const [fk, f] of Object.entries(porFrente)){
       if (f.sent < 50) continue;
       const cad = D.cadastros?.[fk] || { cad:0, qual:0 }, grp = D.grupo?.[fk] || 0, nome = FRENTE_NOME[fk]||fk;
-      const tx = cad.qual / f.sent, oo = f.skipO / Math.max(f.sent+f.skipO,1);
+      const tx = cad.qual / f.sent, oo = (f.oo||0) / Math.max(f.sent,1);
       notas.push(`<b>${esc(nome)}</b>: ${(tx*100).toFixed(1)}% de cadastro qualificado por mensagem (gate 2%${tx>=.02?" ✓":" ✗"}) · opt-out ${(oo*100).toFixed(1)}% (gate 3%${oo<=.03?" ✓":" ✗"}) · custo por qualificado ${cad.qual>0?fmtCusto(f.sent*TARIFA_MSG/cad.qual):"—"}${grp?` · custo por entrada no grupo ${fmtCusto(f.sent*TARIFA_MSG/grp)}`:""}${f.skipE>0?` · ${f.skipE} pulados por conversa ativa (voltam após 72h calados)`:""}`);
       const ouro = f.camp.filter(c => /ouro/i.test(c.name)).reduce((a,c)=>a+c.sent,0), base = f.sent - ouro;
       if (ouro && base) notas.push(`<b>${esc(nome)}</b>: ${ouro} mensagens para o ouro do webinário e ${base} para a base — comparar a taxa de cadastro das duas antes de liberar a próxima camada.`);
