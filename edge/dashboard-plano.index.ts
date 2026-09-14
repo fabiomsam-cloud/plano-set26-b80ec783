@@ -310,7 +310,7 @@ Deno.serve(async (req: Request) => {
       ),
       // (8) Disparos da Anne (espelho n8n ANNE · Disparos Sync, 5 min) — só campanhas do Estude Comigo
       fetchAll((a, b) =>
-        db.from("anne_disparos").select("campaign_id, name, frente, onda, template, status, total, sent, pending, skipped_existing, skipped_optout, failed, started_at, last_sent_at")
+        db.from("anne_disparos").select("campaign_id, name, frente, onda, template, status, total, sent, pending, skipped_existing, skipped_optout, failed, optout_novos, started_at, last_sent_at")
           .ilike("name", "EC %").order("started_at").range(a, b)
       ),
       // (9) Cadastros nas páginas do Estude Comigo vindos de DISPARO (utm_source anne-disparo) desde 14/09
