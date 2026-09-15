@@ -785,8 +785,8 @@ function renderGasto(){
     const T = {plano:0, exec:0, msgs:0};
     for (const l of linhas){ const temPlano = l.plano != null, resta = temPlano ? l.plano - l.exec : null; T.plano += l.plano||0; T.exec += l.exec; T.msgs += l.msgs||0;
       h += `<tr><td>${l.nome}${l.obs?`<br><small>${esc(l.obs)}</small>`:""}</td><td>${temPlano?fmtR(l.plano):"—"}</td><td><b>${fmtR2(l.exec)}</b></td><td>${(l.msgs||0).toLocaleString("pt-BR")}</td><td class="${resta!=null&&resta<0?"bad":""}">${resta!=null?sR(resta):"—"}</td><td class="${temPlano?clsCons(l.exec,l.plano):""}">${temPlano?pct(l.exec,l.plano):"—"}</td></tr>`; }
-    const resta = T.plano - T.exec;
-    h += `<tr><td><b>Total</b></td><td><b>${fmtR(T.plano)}</b></td><td><b>${fmtR2(T.exec)}</b></td><td><b>${T.msgs.toLocaleString("pt-BR")}</b></td><td class="${resta<0?"bad":""}"><b>${sR(resta)}</b></td><td class="${clsCons(T.exec,T.plano)}"><b>${pct(T.exec,T.plano)}</b></td></tr></table></div>`;
+    const resta = T.plano - T.exec, semPlano = !linhas.some(l => l.plano != null);
+    h += `<tr><td><b>Total</b></td><td><b>${semPlano?"—":fmtR(T.plano)}</b></td><td><b>${fmtR2(T.exec)}</b></td><td><b>${T.msgs.toLocaleString("pt-BR")}</b></td><td class="${!semPlano&&resta<0?"bad":""}"><b>${semPlano?"—":sR(resta)}</b></td><td class="${semPlano?"":clsCons(T.exec,T.plano)}"><b>${semPlano?"—":pct(T.exec,T.plano)}</b></td></tr></table></div>`;
     return { h, T };
   };
   const linhasMeta = (bloco, frentes) => frentes.map(f => ({ nome: NOME[f] || f, plano: PLANO[bloco][f].mes, previsto: previstoPlano(PLANO[bloco][f], hoje), exec: g(meta, bloco, f), obs: PLANO[bloco][f].obs }));
