@@ -630,12 +630,16 @@ Deno.serve(async (req: Request) => {
           const ecFrente = frenteDe(ecTag);
           const ecConj: Record<string, { cad: number; qual: number; grp: number }> = {};
           const ecNoGrupo = new Set<string>();  // leads qualificados que entraram no grupo da frente após o cadastro
+          const corte2d = new Date(Date.now() - 2 * 86400_000).toISOString();
+          let q2d = 0, g2d = 0;                  // últimos 2 dias (o TJ-AM teve link bloqueado de 10 a 13/09)
           for (const r of ecCamp) {
             const k = (r.utm_content ?? "?").split(" (")[0].trim();  // "AQUECIDOS (75% + …)" → AQUECIDOS
             (ecConj[k] ??= { cad: 0, qual: 0, grp: 0 }).cad++;
             if (r.qualified === "true") {
               ecConj[k].qual++;
-              if (entrouGrupo(r.lead_id, ecFrente, r.event_time, r.leads?.phone) && !ecNoGrupo.has(r.lead_id!)) { ecNoGrupo.add(r.lead_id!); ecConj[k].grp++; }
+              const entrou = entrouGrupo(r.lead_id, ecFrente, r.event_time, r.leads?.phone);
+              if (entrou && !ecNoGrupo.has(r.lead_id!)) { ecNoGrupo.add(r.lead_id!); ecConj[k].grp++; }
+              if (r.event_time >= corte2d) { q2d++; if (entrou) g2d++; }
             }
           }
           const fCamp = forms.filter((f) => (f.utm_campaign ?? "").includes(camp.id));
@@ -657,7 +661,8 @@ Deno.serve(async (req: Request) => {
             orcamento_dia: camp.orcamento_dia, adsets: camp.adsets, ads,
             leads_ec_mes: ecTag ? ecQual.length : null,      // qualificados
             cadastros_ec_mes: ecTag ? ecCamp.length : null,  // todos os cadastros da página
-            grupo_ec_mes: ecTag ? ecNoGrupo.size : null,     // qualificados que entraram no grupo (lead a lead, webhook)
+            grupo_ec_mes: ecTag ? ecNoGrupo.size : null,     // qualificados que entraram no grupo (lista Sendflow + webhook)
+            leads_ec_2d: ecTag ? q2d : null, grupo_ec_2d: ecTag ? g2d : null,  // últimos 2 dias
             ec_conjuntos: ecTag ? ecConj : null,
             forms_mes: fCamp.length,
             vendas_mes: vCamp.length,
