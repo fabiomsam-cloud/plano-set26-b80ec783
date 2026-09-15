@@ -1347,7 +1347,7 @@ function renderResumo(){
     html += `<div class="rs-h"><h3>Disparos · Estude Comigo</h3><span>por disparo: enviadas · cadastros na página depois do envio · entrada no grupo pela lista de membros da Sendflow (lida ${memAt2}) e webhook · custo = enviadas × R$ 0,43 · toque na frente para abrir</span></div>`;
     const ordemF = ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"];
     for (const fk of ordemF){
-      const cs = (porFrente[fk]||[]).sort((a,b)=>(a.started_at||"").localeCompare(b.started_at||""));
+      const cs = (porFrente[fk]||[]).filter(c => (c.sent||0) > 0 || (c.pending||0) > 0).sort((a,b)=>(a.started_at||"").localeCompare(b.started_at||""));
       if (!cs.length) continue;
       const T = {sent:0, cad:0, grp:0, oo:0, pend:0};
       const rows = cs.map(c => {
