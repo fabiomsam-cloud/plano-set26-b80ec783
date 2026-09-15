@@ -325,7 +325,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow, sfMembros] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow, sfMembros, dispResultado] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -462,6 +462,8 @@ Deno.serve(async (req: Request) => {
       // (14) Membros dos grupos (lista da Sendflow: export CSV via POST op=membros, ou API) — fonte de verdade da entrada.
       //      O webhook (group_events) perde ~metade das entradas nas SEDUCs; casamos por telefone com esta lista também.
       fetchAll((a, b) => db.from("sendflow_membros").select("frente, numero_norm, saiu, captured_at").order("frente").order("numero_norm").range(a, b)),
+      // (15) Resultado POR DISPARO (enviadas × cadastro × entrada no grupo pela lista da Sendflow) — fn_disparos_resultado
+      (async () => { const { data, error } = await db.rpc("fn_disparos_resultado"); if (error) console.error("fn_disparos_resultado", error); return data ?? []; })(),
     ]);
 
     // ---- Entradas nos grupos do Estude Comigo por lead (releases do Sendflow por frente)
@@ -701,6 +703,7 @@ Deno.serve(async (req: Request) => {
       disparos: {
         campanhas: (disparos as { name: string }[]).filter((c) => /^EC /.test(c.name)),  // bloco Estude Comigo (como antes)
         todas: disparos,                                                                    // aba GASTO
+        resultado: dispResultado,                                                           // por disparo: cadastros e entradas (lista Sendflow)
         // cadastros via disparo por frente (utm_campaign das páginas de nutrição: nutricao-<frente>-aula)
         // grupo = qualificados do disparo que entraram no grupo da frente (lead a lead, webhook do Sendflow)
         membros_at: membrosAt || null,   // última leitura da lista de membros da Sendflow
