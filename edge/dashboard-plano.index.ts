@@ -272,9 +272,23 @@ Deno.serve(async (req: Request) => {
   // Substitui a lista da frente (fonte csv). Script: PLANO 2026/painel/carregar_membros_sendflow.py
   if (url.searchParams.get("resource") === "membros" && req.method === "POST") {
     try {
-      const b = await req.json() as { frente?: string; membros?: { numero: string; saiu?: boolean }[] };
+      const b = await req.json() as { frente?: string; membros?: { numero: string; saiu?: boolean }[]; urls?: string[] };
       const frente = String(b?.frente ?? "").toUpperCase();
-      if (!["TJAM", "SEDUC_AM", "SEDUC_PA", "POLICIAS", "PRF"].includes(frente) || !Array.isArray(b?.membros)) return json({ error: "frente/membros inválidos" }, 400);
+      if (!["TJAM", "SEDUC_AM", "SEDUC_PA", "POLICIAS", "PRF"].includes(frente)) return json({ error: "frente inválida" }, 400);
+      // Modo "urls": a própria edge baixa os CSVs do export do conector Sendflow ("Posição;Grupo;Nome;Número[;Saiu]")
+      if (Array.isArray(b?.urls) && b.urls.length) {
+        b.membros = [];
+        for (const u of b.urls) {
+          if (!/^https:\/\/firebasestorage\.googleapis\.com\//.test(u)) return json({ error: "url fora do storage do Sendflow" }, 400);
+          const r = await fetch(u); if (!r.ok) return json({ error: `csv HTTP ${r.status}` }, 502);
+          const txt = (await r.text()).replace(/^\uFEFF/, "");
+          for (const ln of txt.split(/\r?\n/).slice(1)) {
+            const c = ln.split(";"); if (c.length < 4) continue;
+            b.membros.push({ numero: c[3], saiu: (c[4] ?? "").trim().toLowerCase() === "sim" });
+          }
+        }
+      }
+      if (!Array.isArray(b?.membros)) return json({ error: "membros/urls ausentes" }, 400);
       const norm = (p: string) => { const d = String(p ?? "").replace(/\D/g, ""); return d.startsWith("55") && d.length >= 12 ? d.slice(2, 4) + d.slice(-8) : d.slice(0, 2) + d.slice(-8); };
       const at = new Date().toISOString();
       const rows = new Map<string, boolean>();
