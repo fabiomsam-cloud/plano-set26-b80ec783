@@ -1397,6 +1397,16 @@ function renderResumo(){
       const ordem = web ? 0 : (CAMADA_ORDEM[r.camada] ?? (parseInt(r.camada,10)||99));
       rows.push({ fk, ordem, nome: L + (fk==="POLICIAS" && r.onda ? ` · ${esc(r.onda)}` : ""), n: r.n, estado, cls, key: fk+"|"+ordem+"|"+r.onda });
     }
+    // --- perfil das camadas (Polícias 16/09: escolaridade × pesquisa × compradores) — decide quem recebe link direto do grupo
+    if (D.perfil && D.perfil.length){
+      html += `<div class="rs-h"><h3>Perfil das camadas · Polícias AM</h3><span>base tmp_disparo_policias_set26 · só superior/pós recebe o link do grupo (decisão 16/09) · médio fica fora</span></div>
+      <div class="rs-wrap"><table class="rs"><tr><th>Camada</th><th>Perfil</th><th>Leads</th><th>Superior/pós</th><th>Médio</th><th>Com pesquisa</th><th>Compradores</th><th>Disparados</th></tr>`;
+      for (const r of D.perfil){
+        const pct = (x) => r.n ? Math.round(100*x/r.n) + "%" : "–";
+        html += `<tr><td><b>${esc(String(r.camada))}</b></td><td><small>${esc(r.descricao||"")}</small></td><td>${(r.n||0).toLocaleString("pt-BR")}</td><td>${(r.superior||0).toLocaleString("pt-BR")} <small>(${pct(r.superior||0)})</small></td><td>${(r.medio||0).toLocaleString("pt-BR")} <small>(${pct(r.medio||0)})</small></td><td>${pct(r.com_pesquisa||0)}</td><td>${(r.compradores||0).toLocaleString("pt-BR")}</td><td>${r.disparado ? "✅ "+(r.disparado).toLocaleString("pt-BR") : "⏳"}</td></tr>`;
+      }
+      html += `</table></div>`;
+    }
     // camadas planejadas que ainda nem têm base montada
     for (const [fk, lst] of Object.entries(CAMADA_A_MONTAR)) for (const [i, nome] of lst.entries()) rows.push({ fk, ordem: 50+i, nome, n: null, estado: "🧱 base não montada", cls: "bad", key: fk+"|am"+i });
     // agrega linhas iguais (mesma camada em ondas diferentes — Polícias)

@@ -326,7 +326,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow, sfMembros, dispResultado] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow, sfMembros, dispResultado, perfilCamadas] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -465,6 +465,8 @@ Deno.serve(async (req: Request) => {
       fetchAll((a, b) => db.from("sendflow_membros").select("frente, numero_norm, saiu, captured_at").order("frente").order("numero_norm").range(a, b)),
       // (15) Resultado POR DISPARO (enviadas × cadastro × entrada no grupo pela lista da Sendflow) — fn_disparos_resultado
       (async () => { const { data, error } = await db.rpc("fn_disparos_resultado"); if (error) console.error("fn_disparos_resultado", error); return data ?? []; })(),
+      // (16) Perfil das camadas de disparo (escolaridade/pesquisa/compradores por camada) — fn_plano_disparo_perfil (Polícias 16/09)
+      (async () => { const { data, error } = await db.rpc("fn_plano_disparo_perfil"); if (error) console.error("fn_plano_disparo_perfil", error); return data ?? []; })(),
     ]);
 
     // ---- Entradas nos grupos do Estude Comigo por lead (releases do Sendflow por frente)
@@ -729,6 +731,7 @@ Deno.serve(async (req: Request) => {
         }, {} as Record<string, { cad: number; qual: number; grupo: number; _ids: Set<string> }>)).map(([k, v]) => [k, { cad: v.cad, qual: v.qual, grupo: v.grupo }])),
         // bases de disparo: camada × status (fn_plano_disparo_camadas) — feito × falta
         camadas: camadasDisparo,
+        perfil: perfilCamadas,   // perfil por camada (superior/médio/pesquisa/compradores/disparado)
         grupo: (ecGrupo as { groups: { name: string } | null }[]).reduce((acc, r) => {
           const n = (r.groups?.name ?? "").toUpperCase();
           const f = /TJ-AM/.test(n) ? "TJAM" : /SEDUC-AM/.test(n) ? "SEDUC_AM" : /SEDUC-PA/.test(n) ? "SEDUC_PA" : /POL[IÍ]C/.test(n) ? "POLICIAS" : /PRF/.test(n) ? "PRF" : "OUTRAS";
