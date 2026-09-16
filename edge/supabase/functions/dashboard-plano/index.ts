@@ -21,6 +21,7 @@ const CAMPANHAS_PLANO: { id: string; conta: string; ec?: string }[] = [
   { id: "52665102440428", conta: "SCVP TRIBUNAIS", ec: "fase3_tjam_ec_set26" },       // [PLANO][FASE3][TJAM]
   { id: "120256316109260492", conta: "SCVP ON-LINE", ec: "fase3_seducam_ec_set26" },  // [PLANO][FASE3][SEDUCAM]
   { id: "52665102467028", conta: "SCVP TRIBUNAIS", ec: "fase3_seducpa_ec_set26" },    // [PLANO][FASE3][SEDUCPA]
+  { id: "120256389359590492", conta: "SCVP ON-LINE", ec: "fase3_policias_ec_set26" }, // [PLANO][FASE3][POLICIAS] @deltafabiosilva (ativa 16/09 00h20)
   { id: "120249755892890307", conta: "SPOTFABIO" },       // Play Passei · VSL vertical (11/09, CBO R$ 200)
   { id: "52664037551228", conta: "SCVP TRIBUNAIS" },      // [PLANO][BLINDADO][TJAM]
   { id: "120256238530960492", conta: "SCVP ON-LINE" },    // [PLANO][BLINDADO][SEDUCAM]
@@ -376,7 +377,7 @@ Deno.serve(async (req: Request) => {
       fetchAll((a, b) =>
         db.from("campaign_events")
           // o evento é gravado p/ TODO cadastro; o flag diz quem é qualificado (só esse recebe link do grupo + Lead CAPI)
-          .select("lead_id, event_time, utm_campaign, utm_content, utm_term, qualified:raw_payload->>qualified, leads(phone)")
+          .select("lead_id, event_time, utm_campaign, utm_content, utm_term, qualified:raw_payload->>qualified, escolaridade:raw_payload->>escolaridade, leads(phone)")
           .eq("event_type", "estude_comigo_lead").gte("event_time", SET_INI_ISO)
           .order("event_time").range(a, b)
       ),
@@ -620,7 +621,7 @@ Deno.serve(async (req: Request) => {
         const forms = formsBlindado as FormRow[];
         const vUtm = vendasUtm as VendaRow[];
 
-        type EcRow = { lead_id: string | null; event_time: string; utm_campaign: string | null; utm_content: string | null; utm_term: string | null; qualified: string | null; leads?: { phone: string | null } | null };
+        type EcRow = { lead_id: string | null; event_time: string; utm_campaign: string | null; utm_content: string | null; utm_term: string | null; qualified: string | null; escolaridade?: string | null; leads?: { phone: string | null } | null };
         const ecRows = leadsEc as EcRow[];
         const ecByCamp: Record<string, string | undefined> = {};
         for (const c of CAMPANHAS_PLANO) ecByCamp[c.id] = c.ec;
@@ -634,6 +635,14 @@ Deno.serve(async (req: Request) => {
           const ecNoGrupo = new Set<string>();  // leads qualificados que entraram no grupo da frente após o cadastro
           const corte2d = new Date(Date.now() - 2 * 86400_000).toISOString();
           let q2d = 0, g2d = 0;                  // últimos 2 dias (o TJ-AM teve link bloqueado de 10 a 13/09)
+          // escolaridade dos cadastros (Fábio 16/09: "leads de ensino médio × superior p/ ter noção";
+          // decisão dele: médio se cadastra mas fica fora do grupo por enquanto)
+          const ecEscol = { superior: 0, medio: 0, fundamental: 0, outros: 0 };
+          for (const r of ecCamp) {
+            const e = (r.escolaridade ?? "").toLowerCase();
+            if (/superior|p[oó]s/.test(e)) ecEscol.superior++; else if (/m[eé]dio/.test(e)) ecEscol.medio++;
+            else if (/fundamental/.test(e)) ecEscol.fundamental++; else ecEscol.outros++;
+          }
           for (const r of ecCamp) {
             const k = (r.utm_content ?? "?").split(" (")[0].trim();  // "AQUECIDOS (75% + …)" → AQUECIDOS
             (ecConj[k] ??= { cad: 0, qual: 0, grp: 0 }).cad++;
@@ -666,6 +675,7 @@ Deno.serve(async (req: Request) => {
             grupo_ec_mes: ecTag ? ecNoGrupo.size : null,     // qualificados que entraram no grupo (lista Sendflow + webhook)
             leads_ec_2d: ecTag ? q2d : null, grupo_ec_2d: ecTag ? g2d : null,  // últimos 2 dias
             ec_conjuntos: ecTag ? ecConj : null,
+            ec_escolaridade: ecTag ? ecEscol : null,   // superior/médio/fundamental dos cadastros
             forms_mes: fCamp.length,
             vendas_mes: vCamp.length,
             vendas_net_mes: vCamp.reduce((s, v) => s + Number(v.net_value ?? 0), 0),
@@ -721,7 +731,7 @@ Deno.serve(async (req: Request) => {
         camadas: camadasDisparo,
         grupo: (ecGrupo as { groups: { name: string } | null }[]).reduce((acc, r) => {
           const n = (r.groups?.name ?? "").toUpperCase();
-          const f = /TJ-AM/.test(n) ? "TJAM" : /SEDUC-AM/.test(n) ? "SEDUC_AM" : /SEDUC-PA/.test(n) ? "SEDUC_PA" : /POLIC/.test(n) ? "POLICIAS" : /PRF/.test(n) ? "PRF" : "OUTRAS";
+          const f = /TJ-AM/.test(n) ? "TJAM" : /SEDUC-AM/.test(n) ? "SEDUC_AM" : /SEDUC-PA/.test(n) ? "SEDUC_PA" : /POL[IÍ]C/.test(n) ? "POLICIAS" : /PRF/.test(n) ? "PRF" : "OUTRAS";
           acc[f] = (acc[f] ?? 0) + 1;
           return acc;
         }, {} as Record<string, number>),
