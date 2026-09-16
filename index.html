@@ -497,7 +497,7 @@ const FRENTES = [
   {id:"tjam",      nome:"TJ-AM",       diaria:760, det:"v36: web 380 + Fase 2 60 + Fase 3 300 (15–20) + audiência 20"},
   {id:"seducam",   nome:"SEDUC-AM",    diaria:430, det:"v36: web 220 + Fase 2 40 + Fase 3 150 (15–20) + audiência 20"},
   {id:"seducpa",   nome:"SEDUC-PA",    diaria:220, det:"v36: web 100 + Fase 2 40 + Fase 3 60 (15–19) + audiência 20"},
-  {id:"policias",  nome:"Polícias AM", diaria:420, det:"v36: Fase 2 200 + Fase 3 200 (15–20) + audiência 20"},
+  {id:"policias",  nome:"Polícias AM", diaria:500, det:"Fase 2 200 + Fase 3 300 (ativa 16/09 00h20; v36 previa 200) — realocar entre conjuntos só com OK"},
   {id:"prf",       nome:"PRF",         diaria:260, det:"v36: Fase 2 120 + Fase 3 120 + audiência 20"},
   {id:"blindado",  nome:"Blindado",    diaria:450, det:"v36: TJ 100 + SEDUC-AM 100 + SEMSA 100 + SEDUC-PA 50 + ManausPrev 100"},
   {id:"playpassei",nome:"Play Passei", diaria:272, det:"v36: nossa metade R$ 272/dia · leitura pela Hubla em 18/09"},
@@ -540,7 +540,7 @@ const CAMP_INFO = [
   {id:"52664735869628",     t:"SEDUC-PA · Fase 2 (consciência)", conta:"TRIBUNAIS", tipo:"video", frente:"SEDUC-PA", pub75:"SEDUC_PA", faixa:{ok:0.10,stop:0.25}, diaria:40,
    obj:"Vídeos de consciência (edital FGV, prova 29/11)", pub:"No ar 10/09 · 15 anúncios (5 vídeos × 3) · @souconcurseiro"},
   {id:"120256295405940492", t:"Polícias AM · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", frente:"Polícias AM", pub75:"POLICIAS", faixa:{ok:0.10,stop:0.25}, diaria:200,
-   obj:"Vídeos do Delegado p/ base policial do Amazonas", pub:"No ar 10/09 · 10 anúncios (5 vídeos × quente/morno) · @deltafabiosilva · R$ 330 até a Fase 3 entrar (16/09), depois divide"},
+   obj:"Vídeos do Delegado p/ base policial do Amazonas", pub:"No ar 10/09 · 10 anúncios (5 vídeos × quente/morno) + 3 reels orgânicos · @deltafabiosilva · R$ 330 → 200 em 15/09 23h40 (Fase 3 entrou)"},
   {id:"120256295408100492", t:"PRF · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", frente:"PRF", pub75:"PRF", faixa:{ok:0.10,stop:0.25}, diaria:120,
    obj:"Vídeos do Delegado p/ base PRF (ingresso encerrado 10/09)", pub:"No ar 10/09 · 6 vídeos × 3 temperaturas · @deltafabiosilva · R$ 200 (verba inteira da frente) → 16/09: 120 aqui + 80 na Fase 3"},
   // ---- FASE 3 · captação Estude Comigo (Lead só qualificado, via gerador de páginas)
@@ -550,6 +550,8 @@ const CAMP_INFO = [
    obj:"Cadastro qualificado (vai fazer p/ professor) → grupo 14–18/09", pub:"No ar 10/09 · AQUECIDOS / QUENTES (inclui inscritos do webinário) · 8 anúncios"},
   {id:"52665102467028",     t:"SEDUC-PA · Fase 3 (captação Estude Comigo)", conta:"TRIBUNAIS", tipo:"lead", frente:"SEDUC-PA", faixa:{ok:4.5,stop:6.5}, diaria:60, ec:"fase3_seducpa_ec_set26",
    obj:"Cadastro qualificado (vai fazer p/ professor) → grupo 14–18/09", pub:"No ar 10/09 · AQUECIDOS / QUENTES · 6 anúncios"},
+  {id:"120256389359590492", t:"Polícias AM · Fase 3 (captação Sala Secreta)", conta:"ON-LINE", tipo:"lead", frente:"Polícias AM", faixa:{ok:9,stop:14}, diaria:300, ec:"fase3_policias_ec_set26",
+   obj:"Cadastro qualificado (ensino superior) → grupo Estude Comigo Polícias → Sala Secreta 28/09 (médio se cadastra mas fica fora do grupo — decisão 16/09)", pub:"ATIVA 16/09 00h20 · 4 conjuntos ABO (TRÊS POLÍCIAS 120 · PC-AM 70 · PM-AM 60 · POLÍCIA PENAL 50) · público 75% Fase 2 + listas PC-AM/Guarda · 23 vídeos · @deltafabiosilva · pixel 429"},
   // ---- PRF ingresso — ENCERRADO 10/09 (fica p/ leitura do mês)
   {id:"120256186603360492", t:"PRF · PV07 (ingresso) — ENCERRADA", conta:"ON-LINE", tipo:"purchase", faixa:{ok:55,stop:75}, diaria:null,
    obj:"Venda do ingresso R$ 19,90 — encerrada por decisão de 10/09", pub:"Verba da frente foi p/ Fase 2/3 · 39 ingressos a R$ 49,60 no mês"},
@@ -603,8 +605,8 @@ const CAL = [
   {de:"2026-09-12", ate:"2026-09-12", t:"Veredito do blindado (janela 7d) + ranking de vídeos Fase 2 das 5 frentes", d:"CPA por produto pelo banco · gasto/ThruPlay/75%/retenção por vídeo", feito:false},
   {de:"2026-09-12", ate:"2026-09-13", t:"Disparos de convite ao Estude Comigo — TJ-AM · SEDUC-AM · SEDUC-PA", d:"lista → teste no número do Fábio → OK explícito → envio escalonado", feito:false},
   {de:"2026-09-14", ate:"2026-09-18", t:"Estude Comigo 1 — TJ-AM · SEDUC-AM · SEDUC-PA", d:"5 msgs/semana com ações de venda · agentes de nutrição ativos", feito:false},
-  {de:"2026-09-15", ate:"2026-09-15", t:"Vídeos de Fase 3 — Polícias AM e PRF (Fábio)", d:"captação com botão + tela final · persona Delegado", feito:false},
-  {de:"2026-09-16", ate:"2026-09-16", t:"Fase 3 Polícias + PRF NO AR · redistribuição de verba", d:"PRF: 200 → 120 Fase 2 + 80 Fase 3 · Polícias: 330 dividido entre Fase 2 e 3 · playlist das Polícias (Fábio)", feito:false},
+  {de:"2026-09-15", ate:"2026-09-15", t:"Vídeos de Fase 3 — Polícias AM (23 editados 15/09) · PRF pendente", d:"tela dividida + trilha + botão + tela final · persona Delegado", feito:true},
+  {de:"2026-09-16", ate:"2026-09-16", t:"Fase 3 Polícias NO AR (00h20) · PRF: criar Fase 3 + disparo Polícias (meta do dia)", d:"Polícias: Fase 2 200 + Fase 3 300 · PRF: 200 → 120 Fase 2 + 80 Fase 3 · playlist das Polícias (Fábio)", feito:false},
   {de:"2026-09-16", ate:"2026-09-17", t:"Disparos de convite — Polícias · PRF", d:"base em camadas (11/09) · teste → OK → envio", feito:false},
   {de:"2026-09-17", ate:"2026-09-17", t:"Fim da janela de estouro — voltar ao teto R$ 1.909", d:"proposta de realocação ao Fábio em 16/09", feito:false},
   {de:"2026-09-19", ate:"2026-09-19", t:"Campanhas de venda (agente vendedor, link na 1ª resposta) + oferta do D1 montada", d:"bônus 24h + bônus à vista · uma por live", feito:false},
@@ -1322,12 +1324,13 @@ function renderResumo(){
   if (f3.length){
     const memAt = RAW.disparos?.membros_at ? new Date(RAW.disparos.membros_at).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : null;
     html += `<div class="rs-h"><h3>Fase 3 · captação Estude Comigo</h3><span>cadastros e qualificados = páginas do gerador (banco) · grupo = telefone do cadastro na lista de membros da Sendflow${memAt?` (lista de ${memAt})`:""} ou no webhook · Lead do pixel só p/ referência</span></div>
-    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto</th><th>Cadastros</th><th>Qualificados</th><th>Entraram no grupo</th><th>Últimos 2 dias</th><th>R$/entrada</th><th>Fora do grupo</th><th>R$/qualificado</th><th>Lead pixel</th><th>Por conjunto (qualif. → grupo)</th></tr>`;
+    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto</th><th>Cadastros</th><th>Médio / Superior</th><th>Qualificados</th><th>Entraram no grupo</th><th>Últimos 2 dias</th><th>R$/entrada</th><th>Fora do grupo</th><th>R$/qualificado</th><th>Lead pixel</th><th>Por conjunto (qualif. → grupo)</th></tr>`;
     for (const i of f3){
       const c = byId[i.id]; let sp=0,px=0; for (const ad of c.ads){ sp+=ad.mes.spend; px+=ad.mes.px_lead; }
       const q = c.leads_ec_mes||0, cad = c.cadastros_ec_mes||0, g = c.grupo_ec_mes||0, fora = Math.max(q-g,0);
       const conj = Object.entries(c.ec_conjuntos||{}).sort((a,b)=>b[1].qual-a[1].qual).map(([k,v])=>`${esc(k)} ${v.qual} → ${v.grp||0}`).join(" · ");
-      html += `<tr><td>${esc(i.frente)}</td><td>${fmtR(sp)}</td><td>${cad}</td><td>${q} <small>(${cad>0?Math.round(q/cad*100):0}%)</small></td>
+      const es = c.ec_escolaridade||{}; const medio = (es.medio||0)+(es.fundamental||0);
+      html += `<tr><td>${esc(i.frente)}</td><td>${fmtR(sp)}</td><td>${cad}</td><td><small title="médio+fundamental / superior+pós">${medio} / ${es.superior||0}</small></td><td>${q} <small>(${cad>0?Math.round(q/cad*100):0}%)</small></td>
         <td class="${q>0 && g/q >= .6 ? "ok" : q>0 && g/q >= .35 ? "mid" : q>0 ? "bad" : ""}"><b>${g}</b> <small>(${q>0?Math.round(g/q*100):0}% dos qualif.)</small></td>
         <td class="${(c.leads_ec_2d||0)>0 && (c.grupo_ec_2d||0)/c.leads_ec_2d >= .6 ? "ok" : (c.leads_ec_2d||0)>0 ? "mid" : ""}">${c.grupo_ec_2d||0} de ${c.leads_ec_2d||0} <small>(${(c.leads_ec_2d||0)>0?Math.round((c.grupo_ec_2d||0)/c.leads_ec_2d*100):0}%)</small></td>
         <td class="${fx(g>0?sp/g:null,i.faixa.ok*3,i.faixa.stop*3)}"><b>${g>0?fmtCusto(sp/g):"—"}</b></td>
