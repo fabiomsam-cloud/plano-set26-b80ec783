@@ -1395,6 +1395,7 @@ function renderResumo(){
       let estado, cls;
       if (ondaKey){ estado = "✅ " + feitoDet(fk, ondaKey); cls = "ok"; }
       else if (r.camada === "P0"){ estado = "já está no grupo · não dispara"; cls = ""; }
+      else if (/pulado_vendedor/.test(st)){ estado = "pulado · em conversa com o vendedor Elite (decisão 18/09)"; cls = ""; }
       else {
         const drafts = camps.filter(c => c.frente===fk && /draft|scheduled/.test(c.status) && c.pending>0);
         if (drafts.length && !web) { estado = `📝 rascunho na Anne: ${drafts.map(c=>`${esc(c.onda||"")} (${c.pending.toLocaleString("pt-BR")})`).join(" · ")} — aguardando OK`; cls = "mid"; }
