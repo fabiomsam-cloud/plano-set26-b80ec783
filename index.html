@@ -1409,7 +1409,7 @@ function renderResumo(){
       PRF: ["Perfil das camadas · PRF", "base tmp_disparo_prf_set26 (18/09) · meta 1.000 nos grupos até a live de 29/09 · sem DDD 92 (foco Polícias AM) · C2 vai pela página v2, as demais com link direto do grupo"],
     };
     for (const fk of ["POLICIAS","PRF"]){
-      const perfilF = (D.perfil||[]).filter(r => (r.frente||"POLICIAS")===fk);
+      const perfilF = (D.perfil||[]).filter(r => (r.frente||"POLICIAS")===fk).sort((a,b)=>(parseInt(a.camada,10)||0)-(parseInt(b.camada,10)||0));
       if (!perfilF.length) continue;
       html += `<div class="rs-h"><h3>${PERFIL_HDR[fk][0]}</h3><span>${PERFIL_HDR[fk][1]}</span></div>
       <div class="rs-wrap"><table class="rs"><tr><th>Camada</th><th>Perfil</th><th>Leads</th><th>Superior/pós</th><th>Médio</th><th>Com pesquisa</th><th>Compradores</th><th>Disparados</th></tr>`;

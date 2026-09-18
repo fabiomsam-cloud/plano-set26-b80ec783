@@ -22,6 +22,8 @@ const CAMPANHAS_PLANO: { id: string; conta: string; ec?: string }[] = [
   { id: "120256316109260492", conta: "SCVP ON-LINE", ec: "fase3_seducam_ec_set26" },  // [PLANO][FASE3][SEDUCAM]
   { id: "52665102467028", conta: "SCVP TRIBUNAIS", ec: "fase3_seducpa_ec_set26" },    // [PLANO][FASE3][SEDUCPA]
   { id: "120256389359590492", conta: "SCVP ON-LINE", ec: "fase3_policias_ec_set26" }, // [PLANO][FASE3][POLICIAS] @deltafabiosilva (ativa 16/09 00h20)
+  { id: "120256420675370492", conta: "SCVP ON-LINE", ec: "fase3_prf_ec_set26" },      // [PLANO][FASE3][PRF] @deltafabiosilva (ativa 17/09 17h30)
+  { id: "120256396913000492", conta: "SCVP ON-LINE" },    // [PLANO][FASE2][PRF] corredor requisitos → dúvidas → metodologia (16/09)
   { id: "120249755892890307", conta: "SPOTFABIO" },       // Play Passei · VSL vertical (11/09, CBO R$ 200)
   { id: "52664037551228", conta: "SCVP TRIBUNAIS" },      // [PLANO][BLINDADO][TJAM]
   { id: "120256238530960492", conta: "SCVP ON-LINE" },    // [PLANO][BLINDADO][SEDUCAM]
@@ -326,7 +328,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow, sfMembros, dispResultado] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, camadasDisparo, sendflow, sfMembros, dispResultado, perfilCamadas] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -465,6 +467,8 @@ Deno.serve(async (req: Request) => {
       fetchAll((a, b) => db.from("sendflow_membros").select("frente, numero_norm, saiu, captured_at").order("frente").order("numero_norm").range(a, b)),
       // (15) Resultado POR DISPARO (enviadas × cadastro × entrada no grupo pela lista da Sendflow) — fn_disparos_resultado
       (async () => { const { data, error } = await db.rpc("fn_disparos_resultado"); if (error) console.error("fn_disparos_resultado", error); return data ?? []; })(),
+      // (16) Perfil das camadas de disparo (escolaridade/pesquisa/compradores por camada) — fn_plano_disparo_perfil (Polícias 16/09)
+      (async () => { const { data, error } = await db.rpc("fn_plano_disparo_perfil"); if (error) console.error("fn_plano_disparo_perfil", error); return data ?? []; })(),
     ]);
 
     // ---- Entradas nos grupos do Estude Comigo por lead (releases do Sendflow por frente)
@@ -729,6 +733,7 @@ Deno.serve(async (req: Request) => {
         }, {} as Record<string, { cad: number; qual: number; grupo: number; _ids: Set<string> }>)).map(([k, v]) => [k, { cad: v.cad, qual: v.qual, grupo: v.grupo }])),
         // bases de disparo: camada × status (fn_plano_disparo_camadas) — feito × falta
         camadas: camadasDisparo,
+        perfil: perfilCamadas,   // perfil por camada (superior/médio/pesquisa/compradores/disparado)
         grupo: (ecGrupo as { groups: { name: string } | null }[]).reduce((acc, r) => {
           const n = (r.groups?.name ?? "").toUpperCase();
           const f = /TJ-AM/.test(n) ? "TJAM" : /SEDUC-AM/.test(n) ? "SEDUC_AM" : /SEDUC-PA/.test(n) ? "SEDUC_PA" : /POL[IÍ]C/.test(n) ? "POLICIAS" : /PRF/.test(n) ? "PRF" : "OUTRAS";
