@@ -498,7 +498,7 @@ const FRENTES = [
   {id:"seducam",   nome:"SEDUC-AM",    diaria:430, det:"v36: web 220 + Fase 2 40 + Fase 3 150 (15–20) + audiência 20"},
   {id:"seducpa",   nome:"SEDUC-PA",    diaria:220, det:"v36: web 100 + Fase 2 40 + Fase 3 60 (15–19) + audiência 20"},
   {id:"policias",  nome:"Polícias AM", diaria:500, det:"Fase 2 200 + Fase 3 300 (ativa 16/09 00h20; v36 previa 200) — realocar entre conjuntos só com OK"},
-  {id:"prf",       nome:"PRF",         diaria:260, det:"v36: Fase 2 120 + Fase 3 120 + audiência 20"},
+  {id:"prf",       nome:"PRF",         diaria:300, det:"Fase 2 corredor 120 + Fase 3 160 (17/09; v36 previa 120) + audiência 20 — Fábio decide em 21/09"},
   {id:"blindado",  nome:"Blindado",    diaria:450, det:"v36: TJ 100 + SEDUC-AM 100 + SEMSA 100 + SEDUC-PA 50 + ManausPrev 100"},
   {id:"playpassei",nome:"Play Passei", diaria:272, det:"v36: nossa metade R$ 272/dia · leitura pela Hubla em 18/09"},
 ];
@@ -541,7 +541,9 @@ const CAMP_INFO = [
    obj:"Vídeos de consciência (edital FGV, prova 29/11)", pub:"No ar 10/09 · 15 anúncios (5 vídeos × 3) · @souconcurseiro"},
   {id:"120256295405940492", t:"Polícias AM · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", frente:"Polícias AM", pub75:"POLICIAS", faixa:{ok:0.10,stop:0.25}, diaria:200,
    obj:"Vídeos do Delegado p/ base policial do Amazonas", pub:"No ar 10/09 · 10 anúncios (5 vídeos × quente/morno) + 3 reels orgânicos · @deltafabiosilva · R$ 330 → 200 em 15/09 23h40 (Fase 3 entrou)"},
-  {id:"120256295408100492", t:"PRF · Fase 2 (consciência)", conta:"ON-LINE", tipo:"video", frente:"PRF", pub75:"PRF", faixa:{ok:0.10,stop:0.25}, diaria:120,
+  {id:"120256396913000492", t:"PRF · Fase 2 (corredor requisitos → dúvidas → metodologia)", conta:"ON-LINE", tipo:"video", frente:"PRF", pub75:"PRF", faixa:{ok:0.10,stop:0.25}, diaria:120,
+   obj:"3 degraus encadeados por 50% (D1 60 · D2 40 · D3 20) · alimenta o conjunto AQUECIDOS da Fase 3", pub:"ATIVA 16/09 09h36 · 8 anúncios · @deltafabiosilva · julgar por custo/p50 e tamanho dos públicos de degrau"},
+  {id:"120256295408100492", t:"PRF · Fase 2 flat (consciência) — PAUSADA 16/09", conta:"ON-LINE", tipo:"video", frente:"PRF", pub75:"PRF", faixa:{ok:0.10,stop:0.25}, diaria:null,
    obj:"Vídeos do Delegado p/ base PRF (ingresso encerrado 10/09)", pub:"No ar 10/09 · 6 vídeos × 3 temperaturas · @deltafabiosilva · R$ 200 (verba inteira da frente) → 16/09: 120 aqui + 80 na Fase 3"},
   // ---- FASE 3 · captação Estude Comigo (Lead só qualificado, via gerador de páginas)
   {id:"52665102440428",     t:"TJ-AM · Fase 3 (captação Estude Comigo)", conta:"TRIBUNAIS", tipo:"lead", frente:"TJ-AM", faixa:{ok:5,stop:8}, diaria:300, ec:"fase3_tjam_ec_set26",
@@ -552,6 +554,8 @@ const CAMP_INFO = [
    obj:"Cadastro qualificado (vai fazer p/ professor) → grupo 14–18/09", pub:"No ar 10/09 · AQUECIDOS / QUENTES · 6 anúncios"},
   {id:"120256389359590492", t:"Polícias AM · Fase 3 (captação Sala Secreta)", conta:"ON-LINE", tipo:"lead", frente:"Polícias AM", faixa:{ok:9,stop:14}, diaria:300, ec:"fase3_policias_ec_set26",
    obj:"Cadastro qualificado (ensino superior) → grupo Estude Comigo Polícias → Sala Secreta 28/09 (médio se cadastra mas fica fora do grupo — decisão 16/09)", pub:"ATIVA 16/09 00h20 · 4 conjuntos ABO (TRÊS POLÍCIAS 120 · PC-AM 70 · PM-AM 60 · POLÍCIA PENAL 50) · público 75% Fase 2 + listas PC-AM/Guarda · 23 vídeos · @deltafabiosilva · pixel 429"},
+  {id:"120256420675370492", t:"PRF · Fase 3 (captação Estude Comigo)", conta:"ON-LINE", tipo:"lead", frente:"PRF", faixa:{ok:6,stop:10}, diaria:160, ec:"fase3_prf_ec_set26",
+   obj:"Cadastro qualificado (superior) → grupo Estude Comigo PRF → live 29/09 · teste: aquecidos da Fase 2 × lista 30d (mesmos criativos)", pub:"ATIVA 17/09 17h30 · AQUECIDOS FASE 2 R$ 100 · LISTA 30 DIAS R$ 60 · 5 vídeos × 2 · página v2 desde 18/09 · pixel COMBO PF-PRF"},
   // ---- PRF ingresso — ENCERRADO 10/09 (fica p/ leitura do mês)
   {id:"120256186603360492", t:"PRF · PV07 (ingresso) — ENCERRADA", conta:"ON-LINE", tipo:"purchase", faixa:{ok:55,stop:75}, diaria:null,
    obj:"Venda do ingresso R$ 19,90 — encerrada por decisão de 10/09", pub:"Verba da frente foi p/ Fase 2/3 · 39 ingressos a R$ 49,60 no mês"},
@@ -579,13 +583,13 @@ const CAMADA_LABEL = {
   TJAM: { web: "Ouro do webinário (qualificado não comprador · plataforma)", P0: "Grupos de agosto (ainda no grupo)", P1: "Lead do webinário TJ-AM (Data Core)", P1a: "Cadastro Fase 3 que recebeu o link bloqueado", P1b: "Cadastro na página de nutrição fora do grupo", P2: "Base superior · lead ≤ 90 dias", P3: "Base superior · lead 90–365 dias" },
   SEDUC_AM: { web: "Ouro do webinário (qualificado não comprador · plataforma)", P2: "Base SEDUC-AM · lead ≤ 90 dias", P3: "Base SEDUC-AM · lead 90–365 dias" },
   SEDUC_PA: { web: "Ouro do webinário (qualificado não comprador · plataforma)" },
+  PRF: { "1": "C1 · compradores PRF c/ superior", "2": "C2 · compradores s/ escolaridade → página v2", "3": "C3 · pós · renda ≥ R$ 4.664", "4": "C4 · pós · renda alta", "5": "C5 · pós · renda ≥ R$ 2.826", "6": "C6 · pós · renda ≥ R$ 2.826", "7": "C7 · graduados · renda ≥ R$ 4.664", "8": "C8 · graduados · renda alta", "9": "C9 · graduados · renda ≥ R$ 2.826", "10": "C10 · graduados · renda ≥ R$ 2.826", "11": "C11 · graduados · renda ≥ R$ 2.826", "12": "C12 · cursando/tecnólogo · renda ≥ R$ 4.664", "13": "C13 · cursando/tecnólogo · renda alta", "14": "C14 · cursando/tecnólogo", "15": "C15 · cursando/tecnólogo" },
   POLICIAS: { "1": "Camada 1 · pesquisa ≥ 58 pts", "2": "Camada 2 · pesquisa ~50 pts", "3": "Camada 3 · pesquisa ~45 pts", "4": "Camada 4 · pesquisa ~36 pts", "5": "Camada 5 · pesquisa ~33 pts / compradores LT", "6": "Camada 6 · compradores LT + ativos 90d / sem pesquisa", "7": "Camada 7 · sem pesquisa (pós)", "8": "Camada 8 · sem pesquisa (superior)", "9": "Camada 9 · sem pesquisa (superior)", "10": "Camada 10 · sem pesquisa (superior)" },
 };
 const CAMADA_ORDEM = { P0: 1, P1: 2, P1a: 3, P1b: 4, P2: 5, P3: 6 };
 // Camadas previstas no plano que ainda não têm base separada no banco
 const CAMADA_A_MONTAR = {
   SEDUC_PA: ["Base SEDUC-PA · lead ≤ 90 dias", "Base SEDUC-PA · lead 90–365 dias"],
-  PRF: ["Base PRF (DDD 92 + superior) · Fase 3 entra 16/09"],
 }; // regra dura: badge 🏆/🔻 só com gasto ≥ R$ 50 na janela de 7 dias
 
 // CPL faixas escalar/parar (janela 3–7d) — CPL medível hoje só p/ webinários instrumentados
@@ -608,6 +612,8 @@ const CAL = [
   {de:"2026-09-15", ate:"2026-09-15", t:"Vídeos de Fase 3 — Polícias AM (23 editados 15/09) · PRF pendente", d:"tela dividida + trilha + botão + tela final · persona Delegado", feito:true},
   {de:"2026-09-16", ate:"2026-09-16", t:"Fase 3 Polícias NO AR (00h20) · PRF: criar Fase 3 + disparo Polícias (meta do dia)", d:"Polícias: Fase 2 200 + Fase 3 300 · PRF: 200 → 120 Fase 2 + 80 Fase 3 · playlist das Polícias (Fábio)", feito:false},
   {de:"2026-09-16", ate:"2026-09-17", t:"Disparos de convite — Polícias · PRF", d:"base em camadas (11/09) · teste → OK → envio", feito:false},
+  {de:"2026-09-17", ate:"2026-09-17", t:"Fase 3 PRF NO AR (17h30) · 2 conjuntos: aquecidos Fase 2 100 · lista 30d 60", d:"5 vídeos (hook dividido + meio + CTA sem som dos PRF) · pixel COMBO PF-PRF · página v2 em 18/09", feito:true},
+  {de:"2026-09-18", ate:"2026-09-26", t:"Disparos PRF · 15 camadas (13.614 leads, sem DDD 92) · meta 1.000 nos grupos até 29/09", d:"C1 compradores 18/09 com vídeo do Fábio · depois 2 camadas/dia com gate de opt-out ≤ 3% em 8h", feito:false},
   {de:"2026-09-17", ate:"2026-09-17", t:"Fim da janela de estouro — voltar ao teto R$ 1.909", d:"proposta de realocação ao Fábio em 16/09", feito:false},
   {de:"2026-09-19", ate:"2026-09-19", t:"Campanhas de venda (agente vendedor, link na 1ª resposta) + oferta do D1 montada", d:"bônus 24h + bônus à vista · uma por live", feito:false},
   {de:"2026-09-21", ate:"2026-09-21", t:"LIVE CPL · TJ-AM", d:"conferir premissa de conversão 3% do funil completo em 22/09", feito:false},
@@ -1398,10 +1404,16 @@ function renderResumo(){
       rows.push({ fk, ordem, nome: L + (fk==="POLICIAS" && r.onda ? ` · ${esc(r.onda)}` : ""), n: r.n, estado, cls, key: fk+"|"+ordem+"|"+r.onda });
     }
     // --- perfil das camadas (Polícias 16/09: escolaridade × pesquisa × compradores) — decide quem recebe link direto do grupo
-    if (D.perfil && D.perfil.length){
-      html += `<div class="rs-h"><h3>Perfil das camadas · Polícias AM</h3><span>base tmp_disparo_policias_set26 · só superior/pós recebe o link do grupo (decisão 16/09) · médio fica fora</span></div>
+    const PERFIL_HDR = {
+      POLICIAS: ["Perfil das camadas · Polícias AM", "base tmp_disparo_policias_set26 · só superior/pós recebe o link do grupo (decisão 16/09) · médio fica fora"],
+      PRF: ["Perfil das camadas · PRF", "base tmp_disparo_prf_set26 (18/09) · meta 1.000 nos grupos até a live de 29/09 · sem DDD 92 (foco Polícias AM) · C2 vai pela página v2, as demais com link direto do grupo"],
+    };
+    for (const fk of ["POLICIAS","PRF"]){
+      const perfilF = (D.perfil||[]).filter(r => (r.frente||"POLICIAS")===fk);
+      if (!perfilF.length) continue;
+      html += `<div class="rs-h"><h3>${PERFIL_HDR[fk][0]}</h3><span>${PERFIL_HDR[fk][1]}</span></div>
       <div class="rs-wrap"><table class="rs"><tr><th>Camada</th><th>Perfil</th><th>Leads</th><th>Superior/pós</th><th>Médio</th><th>Com pesquisa</th><th>Compradores</th><th>Disparados</th></tr>`;
-      for (const r of D.perfil){
+      for (const r of perfilF){
         const pct = (x) => r.n ? Math.round(100*x/r.n) + "%" : "–";
         html += `<tr><td><b>${esc(String(r.camada))}</b></td><td><small>${esc(r.descricao||"")}</small></td><td>${(r.n||0).toLocaleString("pt-BR")}</td><td>${(r.superior||0).toLocaleString("pt-BR")} <small>(${pct(r.superior||0)})</small></td><td>${(r.medio||0).toLocaleString("pt-BR")} <small>(${pct(r.medio||0)})</small></td><td>${pct(r.com_pesquisa||0)}</td><td>${(r.compradores||0).toLocaleString("pt-BR")}</td><td>${r.disparado ? "✅ "+(r.disparado).toLocaleString("pt-BR") : "⏳"}</td></tr>`;
       }
