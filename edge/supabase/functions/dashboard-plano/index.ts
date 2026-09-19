@@ -23,6 +23,7 @@ const CAMPANHAS_PLANO: { id: string; conta: string; ec?: string }[] = [
   { id: "52665102467028", conta: "SCVP TRIBUNAIS", ec: "fase3_seducpa_ec_set26" },    // [PLANO][FASE3][SEDUCPA]
   { id: "120256389359590492", conta: "SCVP ON-LINE", ec: "fase3_policias_ec_set26" }, // [PLANO][FASE3][POLICIAS] @deltafabiosilva (ativa 16/09 00h20)
   { id: "120256420675370492", conta: "SCVP ON-LINE", ec: "fase3_prf_ec_set26" },      // [PLANO][FASE3][PRF] @deltafabiosilva (ativa 17/09 17h30)
+  { id: "120256442884400492", conta: "SCVP ON-LINE", ec: "fase3_prf_quiz_set26" },    // [PLANO][FASE3][PRF][QUIZ] diagnóstico → grupo (criada 18/09, pausada)
   { id: "120256396913000492", conta: "SCVP ON-LINE" },    // [PLANO][FASE2][PRF] corredor requisitos → dúvidas → metodologia (16/09)
   { id: "120249755892890307", conta: "SPOTFABIO" },       // Play Passei · VSL vertical (11/09, CBO R$ 200)
   { id: "52664037551228", conta: "SCVP TRIBUNAIS" },      // [PLANO][BLINDADO][TJAM]
