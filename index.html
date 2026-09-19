@@ -1358,7 +1358,7 @@ function renderResumo(){
         <td class="${cls(c3)}"><b>${brl(c3)}</b></td>
         <td class="${cls(cH)}">${ativa ? brl(cH) + ` <small>(${cadH})</small>` : "—"}</td>
         <td><small>≤ ${faixaTxt(i.faixa)}</small></td>
-        <td style="text-align:left;white-space:normal">${ic} <small>${txt}</small></td></tr>` };
+        <td style="text-align:left;white-space:normal;min-width:240px">${ic} <small>${txt}</small></td></tr>` };
     }).sort((a, b) => (b.ativa - a.ativa) || (a.ord - b.ord));
     const hjM = new Date(Date.now() - 4 * 3600e3).toISOString().slice(0, 10);
     const d3a = new Date(Date.parse(hjM) - 3 * 86400e3).toISOString().slice(0, 10), d3b = new Date(Date.parse(hjM) - 86400e3).toISOString().slice(0, 10);
