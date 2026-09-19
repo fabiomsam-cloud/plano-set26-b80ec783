@@ -145,7 +145,7 @@ type AdWin = {
   spend: number; imp: number; ctr: number; ilc: number;
   v3s: number; thru: number; p75: number; px_purchase: number; px_lead: number; px_ic: number;
 };
-type AdRow = { id: string; nome: string; adset_id: string; adset: string; j7: AdWin; mes: AdWin };
+type AdRow = { id: string; nome: string; adset_id: string; adset: string; j7: AdWin; mes: AdWin; j3: AdWin; hj: AdWin };
 type CampMeta = {
   id: string; conta: string; nome: string; status: string; orcamento_dia: number | null;
   adsets: { id: string; nome: string; status: string; orcamento_dia: number | null; goal: string | null }[];
@@ -194,7 +194,10 @@ async function fetchCampanhasMeta(token: string): Promise<CampMeta[]> {
   const d7fim = new Date(Date.parse(hoje) - 1 * 86400_000).toISOString().slice(0, 10);
   // Uma chamada de insights com DOIS intervalos (7 dias fechados + mês): a Graph devolve uma linha por
   // anúncio × intervalo (date_start distingue). Metade das chamadas → menos rate limit (code 4/17).
-  const ranges = JSON.stringify([{ since: d7ini, until: d7fim }, { since: "2026-09-01", until: hoje }]);
+  // 19/09 (tabela nova da Fase 3): + últimos 3 dias fechados e hoje — mesma chamada, 4 intervalos
+  const d3ini = new Date(Date.parse(hoje) - 3 * 86400_000).toISOString().slice(0, 10);
+  const ranges = JSON.stringify([{ since: d7ini, until: d7fim }, { since: "2026-09-01", until: hoje },
+    { since: d3ini, until: d7fim }, { since: hoje, until: hoje }]);
   const one = async (c: { id: string; conta: string }): Promise<CampMeta> => {
     const [meta, ins] = await Promise.all([
       graphGet(c.id, {
@@ -205,22 +208,26 @@ async function fetchCampanhasMeta(token: string): Promise<CampMeta[]> {
     const rows = (ins.data ?? []) as Record<string, unknown>[];
     const insMes = { data: rows.filter((r) => r.date_start === "2026-09-01") };
     const ins7 = { data: rows.filter((r) => r.date_start === d7ini) };
+    const ins3 = rows.filter((r) => r.date_start === d3ini && r.date_start !== hoje);
+    const insHj = rows.filter((r) => r.date_start === hoje);
     const ads: Record<string, AdRow> = {};
     for (const r of (insMes.data ?? []) as Record<string, unknown>[]) {
       ads[r.ad_id as string] = {
         id: r.ad_id as string, nome: r.ad_name as string,
         adset_id: r.adset_id as string, adset: r.adset_name as string,
-        j7: zeroWin(), mes: parseInsightRow(r),
+        j7: zeroWin(), mes: parseInsightRow(r), j3: zeroWin(), hj: zeroWin(),
       };
     }
     for (const r of (ins7.data ?? []) as Record<string, unknown>[]) {
       const id = r.ad_id as string;
       if (!ads[id]) ads[id] = {
         id, nome: r.ad_name as string, adset_id: r.adset_id as string, adset: r.adset_name as string,
-        j7: zeroWin(), mes: zeroWin() as AdWin,
+        j7: zeroWin(), mes: zeroWin() as AdWin, j3: zeroWin(), hj: zeroWin(),
       } as AdRow;
       ads[id].j7 = parseInsightRow(r);
     }
+    for (const r of ins3) { const a = ads[r.ad_id as string]; if (a) a.j3 = parseInsightRow(r); }
+    for (const r of insHj) { const a = ads[r.ad_id as string]; if (a) a.hj = parseInsightRow(r); }
     const adsets = ((meta.adsets?.data ?? []) as Record<string, unknown>[]).map((a) => ({
       id: a.id as string, nome: a.name as string, status: a.effective_status as string,
       orcamento_dia: a.daily_budget ? Number(a.daily_budget) / 100 : null,
@@ -635,6 +642,11 @@ Deno.serve(async (req: Request) => {
           const ecTag = ecByCamp[camp.id];
           const ecCamp = ecTag ? ecRows.filter((r) => (r.utm_campaign ?? "").toLowerCase() === ecTag) : [];
           const ecQual = ecCamp.filter((r) => r.qualified === "true");
+          const hjM = hojeManaus();
+          const iniHoje = hjM + "T04:00:00.000Z";
+          const ini3 = new Date(Date.parse(hjM) - 3 * 86400_000).toISOString().slice(0, 10) + "T04:00:00.000Z";
+          const em3 = (r: EcRow) => r.event_time >= ini3 && r.event_time < iniHoje;
+          const emHj = (r: EcRow) => r.event_time >= iniHoje;
           const ecFrente = frenteDe(ecTag);
           const ecConj: Record<string, { cad: number; qual: number; grp: number }> = {};
           const ecNoGrupo = new Set<string>();  // leads qualificados que entraram no grupo da frente após o cadastro
@@ -679,6 +691,9 @@ Deno.serve(async (req: Request) => {
             cadastros_ec_mes: ecTag ? ecCamp.length : null,  // todos os cadastros da página
             grupo_ec_mes: ecTag ? ecNoGrupo.size : null,     // qualificados que entraram no grupo (lista Sendflow + webhook)
             leads_ec_2d: ecTag ? q2d : null, grupo_ec_2d: ecTag ? g2d : null,  // últimos 2 dias
+            // 19/09: janelas da tabela nova da Fase 3 (3 dias fechados · hoje), dia de Manaus
+            cad_ec_3d: ecTag ? ecCamp.filter(em3).length : null, qual_ec_3d: ecTag ? ecQual.filter(em3).length : null,
+            cad_ec_hoje: ecTag ? ecCamp.filter(emHj).length : null, qual_ec_hoje: ecTag ? ecQual.filter(emHj).length : null,
             ec_conjuntos: ecTag ? ecConj : null,
             ec_escolaridade: ecTag ? ecEscol : null,   // superior/médio/fundamental dos cadastros
             forms_mes: fCamp.length,

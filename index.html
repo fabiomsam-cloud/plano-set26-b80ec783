@@ -1327,26 +1327,46 @@ function renderResumo(){
     }
     html += `</table></div>`;
   }
-  // --- fase 3
-  const f3 = CAMP_INFO.filter(i => i.ec && byId[i.id] && byId[i.id].status === "ACTIVE");
+  // --- fase 3 · tabela de CPL (19/09, pedido do Fábio: "a sua tela de análise ficou sensacional — substitua")
+  //     CPL = gasto Meta ÷ cadastros REAIS das páginas (banco), nunca o Lead do pixel; ativas + pausadas com gasto no mês
+  const f3 = CAMP_INFO.filter(i => i.ec && byId[i.id] && (byId[i.id].status === "ACTIVE" || byId[i.id].ads.some(a => a.mes.spend > 0)));
   if (f3.length){
-    const memAt = RAW.disparos?.membros_at ? new Date(RAW.disparos.membros_at).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : null;
-    html += `<div class="rs-h"><h3>Fase 3 · captação Estude Comigo</h3><span>cadastros e qualificados = páginas do gerador (banco) · grupo = telefone do cadastro na lista de membros da Sendflow${memAt?` (lista de ${memAt})`:""} ou no webhook · Lead do pixel só p/ referência</span></div>
-    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Gasto</th><th>Cadastros</th><th>Médio / Superior</th><th>Qualificados</th><th>Entraram no grupo</th><th>Últimos 2 dias</th><th>R$/entrada</th><th>Fora do grupo</th><th>R$/qualificado</th><th>Lead pixel</th><th>Por conjunto (qualif. → grupo)</th></tr>`;
-    for (const i of f3){
-      const c = byId[i.id]; let sp=0,px=0; for (const ad of c.ads){ sp+=ad.mes.spend; px+=ad.mes.px_lead; }
-      const q = c.leads_ec_mes||0, cad = c.cadastros_ec_mes||0, g = c.grupo_ec_mes||0, fora = Math.max(q-g,0);
-      const conj = Object.entries(c.ec_conjuntos||{}).sort((a,b)=>b[1].qual-a[1].qual).map(([k,v])=>`${esc(k)} ${v.qual} → ${v.grp||0}`).join(" · ");
-      const es = c.ec_escolaridade||{}; const medio = (es.medio||0)+(es.fundamental||0);
-      html += `<tr><td>${esc(i.frente)}</td><td>${fmtR(sp)}</td><td>${cad}</td><td><small title="médio+fundamental / superior+pós">${medio} / ${es.superior||0}</small></td><td>${q} <small>(${cad>0?Math.round(q/cad*100):0}%)</small></td>
-        <td class="${q>0 && g/q >= .6 ? "ok" : q>0 && g/q >= .35 ? "mid" : q>0 ? "bad" : ""}"><b>${g}</b> <small>(${q>0?Math.round(g/q*100):0}% dos qualif.)</small></td>
-        <td class="${(c.leads_ec_2d||0)>0 && (c.grupo_ec_2d||0)/c.leads_ec_2d >= .6 ? "ok" : (c.leads_ec_2d||0)>0 ? "mid" : ""}">${c.grupo_ec_2d||0} de ${c.leads_ec_2d||0} <small>(${(c.leads_ec_2d||0)>0?Math.round((c.grupo_ec_2d||0)/c.leads_ec_2d*100):0}%)</small></td>
-        <td class="${fx(g>0?sp/g:null,i.faixa.ok*3,i.faixa.stop*3)}"><b>${g>0?fmtCusto(sp/g):"—"}</b></td>
-        <td>${fora} <small>candidatos a resgate</small></td>
-        <td class="${fx(q>0?sp/q:null,i.faixa.ok*2,i.faixa.stop*2)}">${q>0?fmtCusto(sp/q):"—"}</td><td><small>${px}</small></td><td><small>${conj||"—"}</small></td></tr>`;
-    }
-    html += `</table></div>
-    <div class="note" style="margin-top:6px">Entrada no grupo = o telefone do cadastro está na lista de membros dos grupos da frente (export da Sendflow) ou o webhook registrou a entrada depois do cadastro. Só o webhook subestimava pela metade nas SEDUCs (corrigido 14/09). Meta da Fase 2 do plano: grupo ≥ 60% dos qualificados.</div>`;
+    const soma = (c, w) => c.ads.reduce((a, ad) => a + ((ad[w] && ad[w].spend) || 0), 0);
+    const cpl = (g, n) => n > 0 ? g / n : null;
+    const brl = v => v == null ? "—" : "R$ " + v.toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+    const faixaTxt = f => (f.ok + "").replace(".", ",") + " · > " + (f.stop + "").replace(".", ",");
+    const linhas = f3.map(i => {
+      const c = byId[i.id], ativa = c.status === "ACTIVE";
+      const gT = soma(c, "mes"), g3 = soma(c, "j3"), gH = soma(c, "hj");
+      const cad = c.cadastros_ec_mes || 0, q = c.leads_ec_mes || 0;
+      const cad3 = c.cad_ec_3d || 0, cadH = c.cad_ec_hoje || 0;
+      const cT = cpl(gT, cad), cQ = cpl(gT, q), c3 = cpl(g3, cad3), cH = cpl(gH, cadH);
+      const ref = c3 != null ? c3 : cT;
+      let ic, txt;
+      if (!ativa){ ic = "⏸️"; txt = /QUIZ/.test(i.t) ? "pausada" : "pausada / substituída"; }
+      else if (ref == null){ ic = "⚪"; txt = "sem cadastro ainda"; }
+      else if (ref <= i.faixa.ok){ ic = "🟢"; txt = ref <= i.faixa.ok * 0.5 ? "muito abaixo da faixa" : "dentro da faixa"; }
+      else if (ref <= i.faixa.stop){ ic = "🟡"; txt = "zona de manter"; }
+      else { ic = "🔴"; txt = "passou do limite de corte"; }
+      if (ativa && cad < 20) txt += " · amostra pequena";
+      if (ativa && cH != null && cadH >= 5 && c3 != null && cH > c3 * 1.2) txt += " · subindo hoje";
+      const nome = i.frente + (/QUIZ/.test(i.t) ? " · QUIZ" : "") + (ativa ? "" : " <small>(pausada)</small>");
+      const cls = v => v == null || !ativa ? "" : v <= i.faixa.ok ? "ok" : v <= i.faixa.stop ? "mid" : "bad";
+      return { ativa, ord: cT == null ? 1e9 : cT, html: `<tr${ativa ? "" : ' style="opacity:.65"'}><td><b>${nome}</b></td><td>${fmtR(gT)}</td>
+        <td>${cad.toLocaleString("pt-BR")} <small>· ${cad > 0 ? Math.round(q / cad * 100) : 0}%</small></td>
+        <td class="${cls(cT)}"><b>${brl(cT)}</b></td><td>${brl(cQ)}</td>
+        <td class="${cls(c3)}"><b>${brl(c3)}</b></td>
+        <td class="${cls(cH)}">${ativa ? brl(cH) + ` <small>(${cadH})</small>` : "—"}</td>
+        <td><small>≤ ${faixaTxt(i.faixa)}</small></td>
+        <td style="text-align:left;white-space:normal">${ic} <small>${txt}</small></td></tr>` };
+    }).sort((a, b) => (b.ativa - a.ativa) || (a.ord - b.ord));
+    const hjM = new Date(Date.now() - 4 * 3600e3).toISOString().slice(0, 10);
+    const d3a = new Date(Date.parse(hjM) - 3 * 86400e3).toISOString().slice(0, 10), d3b = new Date(Date.parse(hjM) - 86400e3).toISOString().slice(0, 10);
+    const horaM = new Date().toLocaleTimeString("pt-BR", {timeZone:"America/Manaus", hour:"2-digit", minute:"2-digit"});
+    html += `<div class="rs-h"><h3>Fase 3 · custo por lead</h3><span>CPL = gasto na Meta ÷ cadastros reais nas páginas (banco, não o pixel) · qualificado = perfil do grupo (superior no TJ/PRF/Polícias, professor nas SEDUCs) · mês de setembro</span></div>
+    <div class="rs-wrap"><table class="rs"><tr><th>Fase 3</th><th>Gasto total</th><th>Cadastros · % qualificados</th><th>CPL total</th><th>CPL qualificado</th><th>CPL últimos 3 dias <small>(${ddmm(d3a)}–${ddmm(d3b)})</small></th><th>Hoje <small>(até ${horaM})</small></th><th>Faixa do plano <small>(ok · corta)</small></th><th>Leitura</th></tr>
+    ${linhas.map(l => l.html).join("")}</table></div>
+    <div class="note" style="margin-top:6px">Leitura pelo CPL dos últimos 3 dias fechados (ou o total, se a campanha é mais nova): 🟢 até o "ok" do plano · 🟡 entre o ok e o corte · 🔴 acima do corte. "Hoje" é parcial e vem com o nº de cadastros entre parênteses — não julgar com menos de 5.</div>`;
   }
   // --- disparos Estude Comigo (por disparo: enviadas · cadastros · entrada no grupo pela lista da Sendflow)
   const D = RAW.disparos;
