@@ -1340,7 +1340,7 @@ function renderResumo(){
       const gT = soma(c, "mes"), g3 = soma(c, "j3"), gH = soma(c, "hj");
       const cad = c.cadastros_ec_mes || 0, q = c.leads_ec_mes || 0;
       const cad3 = c.cad_ec_3d || 0, cadH = c.cad_ec_hoje || 0;
-      const cT = cpl(gT, cad), cQ = cpl(gT, q), c3 = cpl(g3, cad3), cH = cpl(gH, cadH);
+      const cT = cpl(gT, cad), cQ = cpl(gT, q), c3 = g3 >= 30 ? cpl(g3, cad3) : null, cH = cpl(gH, cadH);  // janela de 3 dias com < R$ 30 (campanha nova) não é leitura
       const ref = c3 != null ? c3 : cT;
       let ic, txt;
       if (!ativa){ ic = "⏸️"; txt = /QUIZ/.test(i.t) ? "pausada" : "pausada / substituída"; }
@@ -1366,7 +1366,7 @@ function renderResumo(){
     html += `<div class="rs-h"><h3>Fase 3 · custo por lead</h3><span>CPL = gasto na Meta ÷ cadastros reais nas páginas (banco, não o pixel) · qualificado = perfil do grupo (superior no TJ/PRF/Polícias, professor nas SEDUCs) · mês de setembro</span></div>
     <div class="rs-wrap"><table class="rs"><tr><th>Fase 3</th><th>Gasto total</th><th>Cadastros · % qualificados</th><th>CPL total</th><th>CPL qualificado</th><th>CPL últimos 3 dias <small>(${ddmm(d3a)}–${ddmm(d3b)})</small></th><th>Hoje <small>(até ${horaM})</small></th><th>Faixa do plano <small>(ok · corta)</small></th><th>Leitura</th></tr>
     ${linhas.map(l => l.html).join("")}</table></div>
-    <div class="note" style="margin-top:6px">Leitura pelo CPL dos últimos 3 dias fechados (ou o total, se a campanha é mais nova): 🟢 até o "ok" do plano · 🟡 entre o ok e o corte · 🔴 acima do corte. "Hoje" é parcial e vem com o nº de cadastros entre parênteses — não julgar com menos de 5.</div>`;
+    <div class="note" style="margin-top:6px">Leitura pelo CPL dos últimos 3 dias fechados (ou o total, se a campanha é mais nova — janela com menos de R$ 30 de gasto aparece "—"): 🟢 até o "ok" do plano · 🟡 entre o ok e o corte · 🔴 acima do corte. "Hoje" é parcial e vem com o nº de cadastros entre parênteses — não julgar com menos de 5.</div>`;
   }
   // --- disparos Estude Comigo (por disparo: enviadas · cadastros · entrada no grupo pela lista da Sendflow)
   const D = RAW.disparos;
