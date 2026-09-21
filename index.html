@@ -1375,7 +1375,7 @@ function renderResumo(){
     const memAt2 = D.membros_at ? new Date(D.membros_at).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
     const porFrente = {};
     for (const c of D.campanhas){ (porFrente[c.frente] ??= []).push(c); }
-    html += `<div class="rs-h"><h3>Disparos · Estude Comigo</h3><span>por disparo: enviadas · cadastros na página depois do envio · entrada no grupo pela lista de membros da Sendflow (lida ${memAt2}) e webhook · custo = enviadas × R$ 0,43 · toque na frente para abrir</span></div>`;
+    html += `<div class="rs-h"><h3>Disparos · Estude Comigo</h3><span>por disparo: enviadas · cadastros na página depois do envio · entrada no grupo pelo webhook da Sendflow em tempo real (último evento ${memAt2}) · custo = enviadas × R$ 0,43 · toque na frente para abrir</span></div>`;
     const ordemF = ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"];
     for (const fk of ordemF){
       const cs = (porFrente[fk]||[]).filter(c => (c.sent||0) > 0 || (c.pending||0) > 0).sort((a,b)=>(a.started_at||"").localeCompare(b.started_at||""));
@@ -1395,7 +1395,7 @@ function renderResumo(){
       html += `<details class="dsp"${fk==="TJAM"?" open":""}><summary><span class="dsp-f">${esc(FRENTE_NOME[fk]||fk)}</span> <b>${T.sent.toLocaleString("pt-BR")}</b> enviadas · <b>${T.cad}</b> cadastros · <b>${T.grp}</b> no grupo (<b>${pctG}%</b>) · <b>${T.grp?fmtCusto(custoT/T.grp):"—"}</b>/entrada · opt-out ${T.oo}${T.pend?` · ${T.pend.toLocaleString("pt-BR")} na fila`:""}</summary>
         <div class="rs-wrap"><table class="rs"><tr><th>Disparo</th><th>Quando</th><th>Enviadas</th><th>Cadastros</th><th>No grupo</th><th>R$/entrada</th><th>Opt-out</th><th>Puladas (conversa / opt-out)</th></tr>${rows}</table></div></details>`;
     }
-    html += `<div class="note" style="margin-top:6px">Quem recebeu duas ondas conta nas duas linhas, então o total da frente pode repetir uma mesma entrada. "No grupo" usa a lista atual de membros; a lista é relida a cada 2 horas pelo conector da Sendflow.</div>`;
+    html += `<div class="note" style="margin-top:6px">Quem recebeu duas ondas conta nas duas linhas, então o total da frente pode repetir uma mesma entrada. "No grupo" usa a lista de membros atualizada em tempo real pelo webhook da Sendflow (cada entrada e saída chega na hora).</div>`;
   }
   // --- camadas de disparo: o que já foi e o que falta (bases tmp_disparo_* + rascunhos da Anne)
   if (D && D.camadas && D.camadas.length){
