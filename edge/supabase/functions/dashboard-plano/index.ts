@@ -418,7 +418,7 @@ Deno.serve(async (req: Request) => {
           .eq("event_type", "estude_comigo_lead").ilike("utm_source", "%anne-disparo%")
           .gte("event_time", "2026-09-14T04:00:00.000Z").order("event_time").range(a, b)
       ),
-      // (10) Entradas nos grupos do Estude Comigo desde 14/09 (group_events; depende do webhook do Sendflow)
+      // (10) Entradas nos grupos do Estude Comigo desde 14/09 (group_events = webhook casado com lead)
       fetchAll((a, b) =>
         db.from("group_events").select("created_at, event_type, groups!inner(name)")
           .ilike("event_type", "%added%").gte("created_at", "2026-09-14T04:00:00.000Z").order("created_at").range(a, b)
@@ -470,8 +470,9 @@ Deno.serve(async (req: Request) => {
         ]);
         return { releases: rel ?? [], grupos: grp ?? [], fonte: "snapshot", erro: key ? ("api indisponível · " + SF_ERRO + (SF_BLOQUEADA_ATE > Date.now() ? ` · chave bloqueada pela Sendflow até ${(() => { const d = new Date(SF_BLOQUEADA_ATE - 4 * 3600_000).toISOString(); return d.slice(8, 10) + "/" + d.slice(5, 7) + " " + d.slice(11, 16); })()} (Manaus)` : "")) : "sem SENDFLOW_API_KEY" };
       })(),
-      // (14) Membros dos grupos (lista da Sendflow: export CSV via POST op=membros, ou API) — fonte de verdade da entrada.
-      //      O webhook (group_events) perde ~metade das entradas nas SEDUCs; casamos por telefone com esta lista também.
+      // (14) Membros dos grupos — sendflow_membros, alimentada EM TEMPO REAL pelo webhook da Sendflow
+      //      (trigger trg_webhook_inbox_sendflow_membros em webhook_inbox; não depende do match com leads nem de rotina).
+      //      Export CSV (resource=membros) fica só como carga manual de emergência.
       fetchAll((a, b) => db.from("sendflow_membros").select("frente, numero_norm, saiu, captured_at").order("frente").order("numero_norm").range(a, b)),
       // (15) Resultado POR DISPARO (enviadas × cadastro × entrada no grupo pela lista da Sendflow) — fn_disparos_resultado
       (async () => { const { data, error } = await db.rpc("fn_disparos_resultado"); if (error) console.error("fn_disparos_resultado", error); return data ?? []; })(),
