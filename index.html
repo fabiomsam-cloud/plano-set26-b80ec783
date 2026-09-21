@@ -1135,6 +1135,10 @@ function convDoAd(ad, tipo, win){          // conversão-chave por frente
 function faixaCls(v, fx){ return v==null||!fx ? "" : v <= fx.ok ? "ok" : v <= fx.stop ? "mid" : "bad"; }
 function fmtCusto(v){ return v==null ? "—" : "R$ " + v.toLocaleString("pt-BR",{maximumFractionDigits:2}); }
 
+/* ---- 2a/2b · resumo por tipo + leituras automáticas ---- */
+const WEB_FRENTES = [["tjam","TJAM","TJ-AM"],["seducpa","SEDUC_PA","SEDUC-PA"],["seducam","SEDUC_AM","SEDUC-AM"]];
+const WEB_CAMP = { tjam:"52663791462228", seducpa:"52663860728228", seducam:"52664345880028" };
+const dISO = n => new Date(Date.now() - (4 + 24*n)*3600e3).toISOString().slice(0,10);
 function funilJanela(code, deISO, ateISO){
   const dias = RAW.funil_dia?.[code] || {}; let ins = 0;
   for (const [d, v] of Object.entries(dias)) if (d >= deISO && d <= ateISO) ins += v.inscritos;
