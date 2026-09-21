@@ -367,18 +367,6 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
   <div id="publicos"></div>
 </div>
 
-<!-- ============ 2c · CAMPANHAS ============ -->
-<div class="card" style="margin-bottom:12px">
-  <div class="card-head">
-    <div><h2>Campanhas ativas · análise por anúncio</h2>
-      <div class="hint">Só o que está no ar (pausadas somem daqui) · janela 7d p/ criativo, mês p/ CPL·CPA · badge 🏆/🔻 só com gasto ≥ R$ 50 nos 7 dias</div>
-    </div>
-  </div>
-  <div id="camp-aviso"></div>
-  <div class="camp-grid" id="campanhas"></div>
-  <div class="note">Hook = vídeo 3s ÷ impressões · Hold = ThruPlay ÷ 3s · "7d" da Meta pode incluir o fim de agosto. Vendas = faturas pagas na Hubla com o id da campanha na UTM (setembro). Blindado sem venda ainda = CPA "—", não zero.</div>
-</div>
-
 <!-- ============ 3 · FUNIL FASE 1 ============ -->
 <div class="grid g-fun">
   <div class="card fcard" id="funil-tjam"></div>
@@ -971,7 +959,6 @@ function renderAll(){
   try { renderResumo(); } catch(e){ $("resumo").innerHTML = `<p class="muted">resumo indisponível: ${esc(e.message)}</p>`; }
   try { renderPublicos(); } catch(e){ $("publicos").innerHTML = `<p class="muted">públicos indisponíveis: ${esc(e.message)}</p>`; }
   try { renderGasto(); } catch(e){ $("gasto").innerHTML = `<p class="muted">aba Gasto indisponível: ${esc(e.message)}</p>`; }
-  renderCampanhas();
   renderFunis();
   renderAlertas();
 }
@@ -1148,126 +1135,6 @@ function convDoAd(ad, tipo, win){          // conversão-chave por frente
 function faixaCls(v, fx){ return v==null||!fx ? "" : v <= fx.ok ? "ok" : v <= fx.stop ? "mid" : "bad"; }
 function fmtCusto(v){ return v==null ? "—" : "R$ " + v.toLocaleString("pt-BR",{maximumFractionDigits:2}); }
 
-function renderCampanhas(){
-  const C = RAW.campanhas;
-  const box = $("campanhas"), aviso = $("camp-aviso");
-  if (!C || !C.ok){
-    box.innerHTML = `<div class="camp-err" style="grid-column:1/-1">Bloco de campanhas sem dados no momento${C&&C.error?` — ${esc(C.error)}`:""}. O resto do painel segue normal.</div>`;
-    aviso.innerHTML = "";
-    return;
-  }
-  aviso.innerHTML = (C.stale ? `<div class="camp-aviso"><b>Meta em rate limit:</b> mostrando a última leitura boa (${new Date(C.fetched_at).toLocaleString("pt-BR",{timeZone:"America/Manaus",hour:"2-digit",minute:"2-digit"})}) — atualiza sozinho em alguns minutos.</div>` : "") + `<div class="camp-aviso"><b>Leitura 10/09:</b> todas as campanhas do plano estão aqui (blindado · webinário · Fase 2 · Fase 3 · Play Passei).
-    Fase 2 se julga por <b>custo/ThruPlay</b> e taxa de 75% (faixa provisória ≤0,10 / >0,25 — calibrar dia 12); Fase 3 por CPL do pixel
-    (só lead qualificado dispara) e pelos cadastros do banco. Blindado: julgado por formulário do popup e venda com UTM da campanha (banco) — o Purchase do pixel foi ignorado desde 11/09 (o CAPI mandava parcelas de alunos como compra; corrigido).
-    Campanhas de PRF ingresso ficam listadas como ENCERRADAS para a leitura do mês.</div>`;
-
-  const byId = {}; for (const it of C.items) byId[it.id] = it;
-  let h = "";
-  for (const info of CAMP_INFO){
-    const c = byId[info.id];
-    if (!c) continue;
-    const ativo = c.status === "ACTIVE";
-    if (!ativo) continue;                       // pausada/encerrada não aparece (pedido do Fábio 11/09)
-    const tot7 = {spend:0, conv:0}, totM = {spend:0, ilc:0, conv:0};
-    for (const ad of c.ads){
-      tot7.spend += ad.j7.spend; tot7.conv += convDoAd(ad, info.tipo, "j7");
-      totM.spend += ad.mes.spend; totM.ilc += ad.mes.ilc; totM.conv += convDoAd(ad, info.tipo, "mes");
-    }
-    const cap = info.diaria ?? c.orcamento_dia;
-    const kpiMes = totM.conv > 0 ? totM.spend / totM.conv : null;
-    const custoForm = info.tipo === "blindado" && c.forms_mes > 0 ? totM.spend / c.forms_mes : null;
-    const kpiLbl = info.tipo === "lead" ? "CPL mês" : info.tipo === "blindado" ? "CPA/venda mês" : info.tipo === "video" ? "Custo/ThruPlay mês" : "CPA mês";
-    const p75M = c.ads.reduce((a,ad)=>a+(ad.mes.p75||0),0), p75_7 = c.ads.reduce((a,ad)=>a+(ad.j7.p75||0),0);
-    const kcls = faixaCls(kpiMes, info.faixa);
-
-    // ranking p/ badge — REGRA DURA: só anúncios com gasto ≥ R$ 50 nos 7d
-    const eleg = c.ads.filter(a => a.j7.spend >= BADGE_MIN_7D);
-    const score = a => { if (info.tipo === "blindado") return (a.forms_mes||0) > 0 && a.mes.spend > 0 ? a.forms_mes / a.mes.spend * 1000 : Number(a.j7.ctr)/100; const cv = convDoAd(a, info.tipo, "j7"); return cv > 0 ? cv / a.j7.spend * 1000 : Number(a.j7.ctr)/100; };
-    let best = null, worst = null;
-    if (eleg.length >= 2){
-      const ord = [...eleg].sort((a,b) => score(b) - score(a));
-      best = ord[0].id; worst = ord[ord.length-1].id;
-      if (best === worst) worst = null;
-    }
-
-    let rows = "";
-    // anúncios sem entrega em nenhuma janela viram 1 linha (Fase 2 tem 30 anúncios — no celular vira rolagem infinita)
-    const semEntrega = c.ads.filter(a => a.j7.spend === 0 && a.mes.spend === 0).length;
-    for (const ad of [...c.ads].sort((a,b)=>b.j7.spend - a.j7.spend)){
-      if (ad.j7.spend === 0 && ad.mes.spend === 0) continue;
-      const hook = ad.j7.imp > 0 ? ad.j7.v3s / ad.j7.imp : null;
-      const hold = ad.j7.v3s > 0 ? ad.j7.thru / ad.j7.v3s : null;
-      const cv7 = convDoAd(ad, info.tipo, "j7");
-      const custo7 = info.tipo === "blindado" ? ((ad.forms_mes||0) > 0 ? ad.mes.spend / ad.forms_mes : null) : (cv7 > 0 ? ad.j7.spend / cv7 : null);
-      const badge = ad.j7.spend < BADGE_MIN_7D ? `<span class="bdg col">coletando dados</span>`
-        : ad.id === best ? `<span class="bdg win">🏆 campeão</span>`
-        : ad.id === worst ? `<span class="bdg lose">🔻 pior</span>` : "";
-      rows += `<tr><td class="adname">${esc(ad.nome)}<small>${esc(ad.adset||"")}</small></td>
-        <td>${fmtR2(ad.j7.spend)}</td>
-        <td>${Number(ad.j7.ctr).toLocaleString("pt-BR",{maximumFractionDigits:2})}%</td>
-        <td>${hook==null?"—":Math.round(hook*100)+"%"}</td>
-        <td>${hold==null?"—":Math.round(hold*100)+"%"}</td>
-        <td class="pc ${faixaCls(custo7, info.faixa)}">${fmtCusto(custo7)}</td>
-        <td>${info.tipo==="blindado" ? `${ad.forms_mes||0} <small style="color:var(--muted)">form</small> · ${ad.vendas_mes} <small style="color:var(--muted)">venda</small>` : info.tipo==="video" ? `${(ad.j7.p75||0).toLocaleString("pt-BR")} <small style="color:var(--muted)">(${ad.j7.thru>0?Math.round((ad.j7.p75||0)/ad.j7.thru*100)+"%":"—"})</small>` : convDoAd(ad, info.tipo, "mes").toLocaleString("pt-BR")}</td>
-        <td>${badge}</td></tr>`;
-    }
-
-    // linha do funil pós-clique (só blindado): cliques → formulários → vendas (mês)
-    let funilPos = "";
-    if (info.tipo === "blindado"){
-      const txForm = totM.ilc > 0 ? c.forms_mes / totM.ilc : null;
-      funilPos = `<div class="pos-funil">Pós-clique (mês):
-        <span class="stp"><b>${totM.ilc.toLocaleString("pt-BR")}</b> cliques</span><span class="arr">→</span>
-        <span class="stp"><b>${c.forms_mes}</b> formulários ${txForm!=null?`(${(txForm*100).toLocaleString("pt-BR",{maximumFractionDigits:1})}%)`:""}</span><span class="arr">→</span>
-        <span class="stp"><b>${c.vendas_mes}</b> vendas · ${fmtK(c.vendas_net_mes)}</span></div>`;
-    }
-
-    // card A/B site × WhatsApp (TJ blindado)
-    let abx = "";
-    if (info.ab){
-      const agg = {};
-      for (const ad of c.ads){
-        const g = (agg[ad.adset] ??= {spend:0, ilc:0});
-        g.spend += ad.j7.spend; g.ilc += ad.j7.ilc;
-      }
-      const A = agg[info.ab.a] || {spend:0, ilc:0}, B = agg[info.ab.b] || {spend:0, ilc:0};
-      const cpcA = A.ilc > 0 ? A.spend/A.ilc : null, cpcB = B.ilc > 0 ? B.spend/B.ilc : null;
-      abx = `<div class="abx"><div class="abt">Teste A/B · site × WhatsApp Anne (7d)</div>
-        <div class="abrow"><span>${esc(info.ab.a)}: <b>${fmtR2(A.spend)}</b> · ${A.ilc} cliques · custo/clique <b>${fmtCusto(cpcA)}</b></span>
-        <span>${esc(info.ab.b)}: <b>${fmtR2(B.spend)}</b> · ${B.ilc} cliques · custo/clique <b>${fmtCusto(cpcB)}</b></span></div>
-        <div class="abwarn">⏳ veredito em ${esc(info.ab.fim)} — não mexer antes da janela fechar.</div></div>`;
-    }
-
-    h += `<div class="camp">
-      <div class="ch"><div>
-        <h3><span class="dotst${ativo?"":" off"}"></span>${esc(info.t)}</h3>
-        <div class="obj"><b>${esc(info.obj)}</b> · ${esc(c.nome)}</div>
-        <div class="pub">${esc(info.pub)}</div>
-      </div><div class="acct">${esc(info.conta)}${ativo?"":" · "+esc(c.status)}</div></div>
-      <div class="kpis">
-        <div class="kp">Gasto 7 dias<b>${fmtR2(tot7.spend)}</b></div>
-        <div class="kp">Orçamento/dia${cap!=null?` <span style="opacity:.7">(${info.diaria!=null?"plano":"Meta"})</span>`:""}<b>${cap!=null?fmtR(cap):"—"}</b></div>
-        <div class="kp ${kcls}">${kpiLbl} <span style="opacity:.7">(faixa ≤${info.faixa.ok}/${info.faixa.stop})</span><b>${fmtCusto(kpiMes)}</b></div>
-        <div class="kp">${info.tipo==="lead"?"Leads mês (pixel)":info.tipo==="video"?"ThruPlays mês":info.tipo==="blindado"?"Vendas c/ UTM mês":"Conversões mês"}<b>${totM.conv.toLocaleString("pt-BR")}</b></div>
-        ${info.tipo==="blindado"?`<div class="kp">Formulários mês · R$/form<b>${c.forms_mes} · ${fmtCusto(custoForm)}</b></div>`:""}
-        ${info.tipo==="video"?`<div class="kp">Assistiu 75% mês <span style="opacity:.7">(7d: ${p75_7.toLocaleString("pt-BR")})</span><b>${p75M.toLocaleString("pt-BR")}</b></div>`:""}
-        ${info.ec!=null&&c.leads_ec_mes!=null?`<div class="kp">Cadastros no banco <span style="opacity:.7">(qualificados)</span><b>${c.leads_ec_mes.toLocaleString("pt-BR")}</b></div>`:""}
-      </div>
-      <div class="tbl-wrap"><table>
-        <tr><th>Anúncio (7d)</th><th>Gasto</th><th>CTR</th><th>Hook</th><th>Hold</th><th>${info.tipo==="lead"?"CPL":info.tipo==="video"?"R$/ThruPlay":info.tipo==="blindado"?"R$/form (mês)":"CPA"}</th><th>${info.tipo==="lead"?"Leads mês":info.tipo==="blindado"?"Form · vendas UTM (mês)":info.tipo==="video"?"75% 7d (÷ThruPlay)":"Vendas px mês"}</th><th></th></tr>
-        ${rows || `<tr><td colspan="8" style="text-align:left;color:var(--muted)">sem anúncios com entrega nas janelas</td></tr>`}
-        ${semEntrega && rows ? `<tr><td colspan="8" style="text-align:left;color:var(--muted)">+ ${semEntrega} anúncio(s) sem entrega ainda</td></tr>` : ""}
-      </table></div>
-      ${funilPos}${abx}
-    </div>`;
-  }
-  box.innerHTML = h;
-}
-
-/* ---- 2a/2b · resumo por tipo + leituras automáticas ---- */
-const WEB_FRENTES = [["tjam","TJAM","TJ-AM"],["seducpa","SEDUC_PA","SEDUC-PA"],["seducam","SEDUC_AM","SEDUC-AM"]];
-const WEB_CAMP = { tjam:"52663791462228", seducpa:"52663860728228", seducam:"52664345880028" };
-const dISO = n => new Date(Date.now() - (4 + 24*n)*3600e3).toISOString().slice(0,10);
 function funilJanela(code, deISO, ateISO){
   const dias = RAW.funil_dia?.[code] || {}; let ins = 0;
   for (const [d, v] of Object.entries(dias)) if (d >= deISO && d <= ateISO) ins += v.inscritos;
@@ -1367,119 +1234,6 @@ function renderResumo(){
     <div class="rs-wrap"><table class="rs"><tr><th>Fase 3</th><th>Gasto total</th><th>Cadastros · % qualificados</th><th>CPL total</th><th>CPL qualificado</th><th>CPL últimos 3 dias <small>(${ddmm(d3a)}–${ddmm(d3b)})</small></th><th>Hoje <small>(até ${horaM})</small></th><th>Faixa do plano <small>(ok · corta)</small></th><th>Leitura</th></tr>
     ${linhas.map(l => l.html).join("")}</table></div>
     <div class="note" style="margin-top:6px">Leitura pelo CPL dos últimos 3 dias fechados (ou o total, se a campanha é mais nova — janela com menos de R$ 30 de gasto aparece "—"): 🟢 até o "ok" do plano · 🟡 entre o ok e o corte · 🔴 acima do corte. "Hoje" é parcial e vem com o nº de cadastros entre parênteses — não julgar com menos de 5.</div>`;
-  }
-  // --- disparos Estude Comigo (por disparo: enviadas · cadastros · entrada no grupo pela lista da Sendflow)
-  const D = RAW.disparos;
-  if (D && D.campanhas && D.campanhas.length){
-    const R = {}; for (const r of (D.resultado||[])) R[r.campaign_id] = r;
-    const memAt2 = D.membros_at ? new Date(D.membros_at).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
-    const porFrente = {};
-    for (const c of D.campanhas){ (porFrente[c.frente] ??= []).push(c); }
-    html += `<div class="rs-h"><h3>Disparos · Estude Comigo</h3><span>por disparo: enviadas · cadastros na página depois do envio · entrada no grupo pelo webhook da Sendflow em tempo real (último evento ${memAt2}) · custo = enviadas × R$ 0,43 · toque na frente para abrir</span></div>`;
-    const ordemF = ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"];
-    for (const fk of ordemF){
-      const cs = (porFrente[fk]||[]).filter(c => (c.sent||0) > 0 || (c.pending||0) > 0).sort((a,b)=>(a.started_at||"").localeCompare(b.started_at||""));
-      if (!cs.length) continue;
-      const T = {sent:0, cad:0, grp:0, oo:0, pend:0};
-      const rows = cs.map(c => {
-        const r = R[c.campaign_id] || {}; const sent = c.sent||0, cad = r.cadastraram||0, grp = r.no_grupo||0, custo = sent*TARIFA_MSG;
-        T.sent += sent; T.cad += cad; T.grp += grp; T.oo += c.optout_novos||0; T.pend += c.pending||0;
-        const nome = esc((c.onda ? c.onda + " · " : "") + c.name.split("·").slice(2).join("·").trim());
-        const quando = c.started_at ? ddmm(c.started_at.slice(0,10)) + " " + c.started_at.slice(11,16) : (c.status === "draft" ? "rascunho" : c.status);
-        return `<tr><td><small>${nome}</small></td><td><small>${quando}</small></td><td><b>${sent.toLocaleString("pt-BR")}</b>${c.pending?` <small>+${c.pending} na fila</small>`:""}</td>
-          <td><b>${cad}</b> <small>${sent?Math.round(cad/sent*100)+"%":""}</small></td>
-          <td class="${sent>0 && grp/sent >= .05 ? "ok" : sent>0 ? "mid" : ""}"><b>${grp}</b> <small>${sent?Math.round(grp/sent*100)+"%":""}</small></td>
-          <td><b>${grp?fmtCusto(custo/grp):"—"}</b></td><td class="${sent>0 && (c.optout_novos||0)/sent > .03 ? "bad" : ""}">${c.optout_novos||0}</td><td><small>${c.skipped_existing||0} / ${c.skipped_optout||0}</small></td></tr>`;
-      }).join("");
-      const pctG = T.sent ? Math.round(T.grp/T.sent*100) : 0, custoT = T.sent*TARIFA_MSG;
-      html += `<details class="dsp"${fk==="TJAM"?" open":""}><summary><span class="dsp-f">${esc(FRENTE_NOME[fk]||fk)}</span> <b>${T.sent.toLocaleString("pt-BR")}</b> enviadas · <b>${T.cad}</b> cadastros · <b>${T.grp}</b> no grupo (<b>${pctG}%</b>) · <b>${T.grp?fmtCusto(custoT/T.grp):"—"}</b>/entrada · opt-out ${T.oo}${T.pend?` · ${T.pend.toLocaleString("pt-BR")} na fila`:""}</summary>
-        <div class="rs-wrap"><table class="rs"><tr><th>Disparo</th><th>Quando</th><th>Enviadas</th><th>Cadastros</th><th>No grupo</th><th>R$/entrada</th><th>Opt-out</th><th>Puladas (conversa / opt-out)</th></tr>${rows}</table></div></details>`;
-    }
-    html += `<div class="note" style="margin-top:6px">Quem recebeu duas ondas conta nas duas linhas, então o total da frente pode repetir uma mesma entrada. "No grupo" usa a lista de membros atualizada em tempo real pelo webhook da Sendflow (cada entrada e saída chega na hora).</div>`;
-  }
-  // --- camadas de disparo: o que já foi e o que falta (bases tmp_disparo_* + rascunhos da Anne)
-  if (D && D.camadas && D.camadas.length){
-    const camps = D.campanhas || [];
-    const rows = [];  // {fk, ordem, nome, n, estado, cls, det}
-    const feitoDet = (fk, ondaKey) => {
-      const cs = camps.filter(c => c.frente===fk && (c.onda||"").toLowerCase()===ondaKey.toLowerCase());
-      if (!cs.length) return "disparada";
-      const sent = cs.reduce((a,c)=>a+c.sent,0), d = cs.map(c=>c.started_at).filter(Boolean).sort()[0];
-      return `${ondaKey} · ${sent.toLocaleString("pt-BR")} enviadas${d?" · "+ddmm(d.slice(0,10)):""}`;
-    };
-    for (const r of D.camadas){
-      const fk = r.frente, st = (r.status||"").toLowerCase(), web = /_web$/.test(r.fonte||"");
-      const L = CAMADA_LABEL[fk]?.[web ? "web" : (r.camada||"")] || (web ? "Ouro do webinário" : `Camada ${r.camada||"?"}`);
-      let ondaKey = null; const m1 = st.match(/^onda(\w+)_disparado$/), m2 = st.match(/^camada(\d+)_disparado$/);
-      if (m1) ondaKey = "Onda " + m1[1]; else if (m2) ondaKey = "Camada " + m2[1];
-      // sub-onda por camada (P1a → "Onda 1a"): a base marca só o número da onda
-      if (ondaKey && /^P\d[a-z]$/.test(r.camada||"") && !/[a-z]$/.test(ondaKey)) ondaKey += r.camada.slice(-1);
-      let estado, cls;
-      if (ondaKey){ estado = "✅ " + feitoDet(fk, ondaKey); cls = "ok"; }
-      else if (r.camada === "P0"){ estado = "já está no grupo · não dispara"; cls = ""; }
-      else if (/pulado_vendedor/.test(st)){ estado = "pulado · em conversa com o vendedor Elite (decisão 18/09)"; cls = ""; }
-      else {
-        const drafts = camps.filter(c => c.frente===fk && /draft|scheduled/.test(c.status) && c.pending>0);
-        if (drafts.length && !web) { estado = `📝 rascunho na Anne: ${drafts.map(c=>`${esc(c.onda||"")} (${c.pending.toLocaleString("pt-BR")})`).join(" · ")} — aguardando OK`; cls = "mid"; }
-        else { estado = fk==="POLICIAS" ? "⏳ falta · Fase 3 entra 16/09" : "⏳ falta"; cls = "bad"; }
-      }
-      const ordem = web ? 0 : (CAMADA_ORDEM[r.camada] ?? (parseInt(r.camada,10)||99));
-      rows.push({ fk, ordem, nome: L + (fk==="POLICIAS" && r.onda ? ` · ${esc(r.onda)}` : ""), n: r.n, estado, cls, key: fk+"|"+ordem+"|"+r.onda });
-    }
-    // --- perfil das camadas (Polícias 16/09: escolaridade × pesquisa × compradores) — decide quem recebe link direto do grupo
-    const PERFIL_HDR = {
-      POLICIAS: ["Perfil das camadas · Polícias AM", "base tmp_disparo_policias_set26 · só superior/pós recebe o link do grupo (decisão 16/09) · médio fica fora"],
-      PRF: ["Perfil das camadas · PRF", "base tmp_disparo_prf_set26 (18/09) · meta 1.000 nos grupos até a live de 29/09 · sem DDD 92 (foco Polícias AM) · C2 vai pela página v2, as demais com link direto do grupo"],
-    };
-    for (const fk of ["POLICIAS","PRF"]){
-      const perfilF = (D.perfil||[]).filter(r => (r.frente||"POLICIAS")===fk).sort((a,b)=>(parseInt(a.camada,10)||0)-(parseInt(b.camada,10)||0));
-      if (!perfilF.length) continue;
-      html += `<div class="rs-h"><h3>${PERFIL_HDR[fk][0]}</h3><span>${PERFIL_HDR[fk][1]}</span></div>
-      <div class="rs-wrap"><table class="rs"><tr><th>Camada</th><th>Perfil</th><th>Leads</th><th>Superior/pós</th><th>Médio</th><th>Com pesquisa</th><th>Compradores</th><th>Disparados</th></tr>`;
-      for (const r of perfilF){
-        const pct = (x) => r.n ? Math.round(100*x/r.n) + "%" : "–";
-        html += `<tr><td><b>${esc(String(r.camada))}</b></td><td><small>${esc(r.descricao||"")}</small></td><td>${(r.n||0).toLocaleString("pt-BR")}</td><td>${(r.superior||0).toLocaleString("pt-BR")} <small>(${pct(r.superior||0)})</small></td><td>${(r.medio||0).toLocaleString("pt-BR")} <small>(${pct(r.medio||0)})</small></td><td>${pct(r.com_pesquisa||0)}</td><td>${(r.compradores||0).toLocaleString("pt-BR")}</td><td>${r.disparado ? "✅ "+(r.disparado).toLocaleString("pt-BR") : "⏳"}</td></tr>`;
-      }
-      html += `</table></div>`;
-    }
-    // camadas planejadas que ainda nem têm base montada
-    for (const [fk, lst] of Object.entries(CAMADA_A_MONTAR)) for (const [i, nome] of lst.entries()) rows.push({ fk, ordem: 50+i, nome, n: null, estado: "🧱 base não montada", cls: "bad", key: fk+"|am"+i });
-    // agrega linhas iguais (mesma camada em ondas diferentes — Polícias)
-    const agg = new Map();
-    for (const r of rows){ const k = r.fk+"|"+r.nome+"|"+r.estado; const a = agg.get(k); if (a) a.n += r.n||0; else agg.set(k, {...r}); }
-    const ordemF = ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"];
-    html += `<div class="rs-h"><h3>Camadas de disparo · feito × falta</h3><span>bases tmp_disparo_* no Data Core + campanhas da Anne · próximas ondas só com OK</span></div>
-    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Camada</th><th>Leads</th><th>Estado</th></tr>`;
-    for (const fk of ordemF){
-      const rs = [...agg.values()].filter(r => r.fk===fk).sort((a,b)=>a.ordem-b.ordem);
-      if (!rs.length) continue;
-      const tot = rs.reduce((a,r)=>a+(r.n||0),0), falta = rs.filter(r=>r.cls==="bad"||r.cls==="mid").reduce((a,r)=>a+(r.n||0),0);
-      html += `<tr><td>${esc(FRENTE_NOME[fk]||fk)}</td><td><b>total</b></td><td><b>${tot.toLocaleString("pt-BR")}</b></td><td><small>${falta.toLocaleString("pt-BR")} ainda sem disparo</small></td></tr>`;
-      for (const r of rs) html += `<tr><td></td><td><small>${r.nome}</small></td><td>${r.n!=null?r.n.toLocaleString("pt-BR"):"—"}</td><td class="${r.cls}" style="text-align:left;white-space:normal"><small>${r.estado}</small></td></tr>`;
-    }
-    html += `</table></div>`;
-  }
-  // --- pessoas nos grupos (Sendflow) por projeto — snapshot gravado pela tarefa agendada
-  const SF = RAW.sendflow;
-  if (SF && SF.releases && SF.releases.length){
-    const ordemF = ["TJAM","SEDUC_AM","SEDUC_PA","POLICIAS","PRF"];
-    const lastAt = SF.releases.map(r=>r.captured_at).sort().pop();
-    const idadeMin = lastAt ? Math.round((Date.now()-Date.parse(lastAt))/60000) : null;
-    const quando = lastAt ? new Date(lastAt).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
-    const fonteTxt = SF.fonte==="api" ? "API da Sendflow ao vivo (cache 10 min)" : `último snapshot${SF.erro?` · <b style="color:var(--amber)">${esc(SF.erro)}</b>`:""}`;
-    html += `<div class="rs-h"><h3>Pessoas nos grupos · Sendflow</h3><span>${fonteTxt} · leitura ${quando}${idadeMin!=null && idadeMin>180?` <b style="color:var(--amber)">(há ${Math.round(idadeMin/60)}h)</b>`:""} · participantes incluem as contas admin · entradas/saídas = analytics da release</span></div>
-    <div class="rs-wrap"><table class="rs"><tr><th>Frente</th><th>Release</th><th>Grupos</th><th>Pessoas</th><th>Cheios</th><th>Entradas hoje</th><th>Entradas total</th><th>Saídas total</th><th>Por grupo</th></tr>`;
-    for (const fk of ordemF){
-      const rs = SF.releases.filter(r=>r.frente===fk); if (!rs.length) continue;
-      const tot = k => rs.reduce((a,r)=>a+(r[k]||0),0);
-      if (rs.length>1) html += `<tr><td>${esc(FRENTE_NOME[fk]||fk)}</td><td><b>total</b></td><td>${tot("grupos")}</td><td><b>${tot("participantes").toLocaleString("pt-BR")}</b></td><td>${tot("grupos_cheios")}</td><td>${tot("entradas_hoje")}</td><td>${tot("entradas_total").toLocaleString("pt-BR")}</td><td>${tot("saidas_total")}</td><td></td></tr>`;
-      for (const r of rs){
-        const gs = (SF.grupos||[]).filter(g=>g.release_id===r.release_id).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
-        const porGrupo = gs.map(g=>`#${g.ordem||"?"} ${g.participantes||0}${g.cheio?" 🔒":""}`).join(" · ");
-        html += `<tr><td>${rs.length>1?"":esc(FRENTE_NOME[fk]||fk)}</td><td><small>${esc(r.nome||r.release_id)}${r.bloqueada?" · <b>bloqueada</b>":""}</small></td><td>${r.grupos||0}</td><td><b>${(r.participantes||0).toLocaleString("pt-BR")}</b></td><td>${r.grupos_cheios||0}</td><td>${r.entradas_hoje||0}</td><td>${(r.entradas_total||0).toLocaleString("pt-BR")}</td><td>${r.saidas_total||0}</td><td><small>${porGrupo||"—"}</small></td></tr>`;
-      }
-    }
-    html += `</table></div>`;
   }
   $("resumo").innerHTML = html || `<p class="muted">sem campanhas ativas com dados</p>`;
 }
