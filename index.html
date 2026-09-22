@@ -393,6 +393,16 @@ footer{color:var(--muted);font-size:11.5px;margin-top:22px;text-align:center}
   <div id="bio-body"></div>
 </div>
 
+<!-- ============ 3c · TRILHA DE MISSÕES (aquecimento dos grupos Polícias AM + PRF) ============ -->
+<div class="card" style="margin-bottom:12px" id="trilha-card">
+  <div class="card-head">
+    <div><h2>🎯 Trilha de Missões · engajamento nos grupos</h2>
+      <div class="hint">Vídeos de aquecimento de Polícias AM e PRF assistidos pela trilha (medição por pessoa) · <b>engajado</b> = cumpriu ≥ 1 missão (75% do vídeo) · pulos não contam</div>
+    </div>
+  </div>
+  <div id="trilha-body"></div>
+</div>
+
 <!-- ============ 4 · CALENDÁRIO ============ -->
 <div class="card" style="margin-bottom:12px">
   <div class="card-head">
@@ -960,6 +970,7 @@ function renderAll(){
   try { renderPublicos(); } catch(e){ $("publicos").innerHTML = `<p class="muted">públicos indisponíveis: ${esc(e.message)}</p>`; }
   try { renderGasto(); } catch(e){ $("gasto").innerHTML = `<p class="muted">aba Gasto indisponível: ${esc(e.message)}</p>`; }
   renderFunis();
+  try { renderTrilha(); } catch(e){ $("trilha-body").innerHTML = `<p class="muted">trilha indisponível: ${esc(e.message)}</p>`; }
   renderAlertas();
 }
 
@@ -1123,6 +1134,42 @@ function renderBio(){
       <div><div class="hint" style="margin-bottom:6px">Origem (medium · Reel)</div>${tab(B.por_origem)}</div>
     </div>
     <div class="hint" style="margin-top:12px">Públicos Meta (conta ON-LINE) sincronizados a cada 6h a partir destes leads: <b>[BIO][DELTA] todos</b> · <b>[BIO][PRF]</b> (farda PRF/indeciso) · <b>[BIO][POLICIAS]</b> (PF/PC/PM). Usar nas Fases 2/3 é decisão do Fábio — o painel só informa. Matrícula = fatura Hubla do mesmo telefone, depois do lead, no produto recomendado.</div>`;
+}
+
+/* ---- 3c · Trilha de Missões (fn_plano_trilha_missoes) ---- */
+const TRILHA_NOMES = { POLICIAS:"Polícias AM", PRF:"PRF" };
+const TRILHA_URL = { POLICIAS:"https://fabiomsam-cloud.github.io/trilha-missoes-a7c3e1/policias/", PRF:"https://fabiomsam-cloud.github.io/trilha-missoes-a7c3e1/prf/" };
+function renderTrilha(){
+  const T = RAW.trilha, box = $("trilha-body");
+  if (!box) return;
+  if (!T || T.error || !T.frentes){ box.innerHTML = `<div class="hint">Sem dados da trilha no momento${T?.error?": "+esc(T.error):""}.</div>`; return; }
+  const n = v => (v||0).toLocaleString("pt-BR");
+  const pct = (a,b) => b ? Math.round(a/b*100) + "%" : "—";
+  const chip = (l,v,cor,sub) => `<div style="background:#f1f5f9;border-radius:10px;padding:8px 14px;min-width:104px"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em">${l}</div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:${cor||'var(--ink)'};margin-top:2px">${v}</div>${sub?`<div style="font-size:11px;color:var(--muted)">${sub}</div>`:""}</div>`;
+  const hm = s => { s = s||0; const h = Math.floor(s/3600), m = Math.round(s%3600/60); return h ? `${h}h${String(m).padStart(2,"0")}` : `${m} min`; };
+  const quando = iso => iso ? new Date(iso).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
+  const blocos = T.frentes.map(F => {
+    const pills = [
+      chip("Engajados", n(F.engajados), 'var(--green)', `${pct(F.engajados, F.membros_grupo)} do grupo`),
+      chip("Completaram", n(F.completaram), 'var(--green)', `todas as ${F.n_missoes} missões`),
+      chip("Assistiram", n(F.assistiram), undefined, `${n(F.identificados)} identificados`),
+      chip("Membros do grupo", n(F.membros_grupo)),
+      chip("Novos hoje", n(F.novos_hoje), 'var(--blue)'),
+      chip("Horas assistidas", String(F.horas_assistidas||0).replace(".",",")+"h"),
+    ].join("");
+    const base = F.missoes?.[0]?.cumpriram || 0;
+    const funil = (F.missoes||[]).map(m => `<tr><td>Missão ${m.ordem} · <span style="font-weight:400;color:var(--ink-2)">${esc(m.titulo)}</span></td><td>${n(m.iniciaram)}</td><td><b>${n(m.cumpriram)}</b></td><td>${pct(m.cumpriram, m.iniciaram)}</td><td>${m.ordem===1?"—":pct(m.cumpriram, base)}</td></tr>`).join("");
+    const top = (T.top||[]).filter(t => t.frente === F.frente);
+    const linhas = top.map(t => `<tr><td>${t.pos}. ${esc(t.nome||"—")}</td><td><a href="https://wa.me/${esc(t.whatsapp)}" target="_blank" rel="noopener">${esc(t.whatsapp)}</a></td><td><b>${t.concluidas}/${F.n_missoes}</b></td><td>${hm(t.seg)}</td><td>${t.no_grupo?"✅":"<span style='color:var(--amber)'>fora</span>"}</td><td>${quando(t.ultimo_acesso)}</td></tr>`).join("");
+    return `<div style="margin-bottom:18px">
+      <div class="rs-h"><h3>${TRILHA_NOMES[F.frente]||F.frente}</h3><span><a href="${TRILHA_URL[F.frente]||"#"}" target="_blank" rel="noopener">abrir trilha ↗</a></span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px">${pills}</div>
+      <div class="rs-wrap"><table class="rs"><tr><th>Missão</th><th>Iniciaram</th><th>Cumpriram</th><th>Conclusão</th><th>Retenção desde a M1</th></tr>${funil||'<tr><td class="hint">sem missões ativas</td></tr>'}</table></div>
+      <div class="hint" style="margin:12px 0 6px">Top ${top.length||""} mais engajados · missões cumpridas, depois tempo assistido</div>
+      <div class="rs-wrap"><table class="rs"><tr><th>Lead</th><th>WhatsApp</th><th>Missões</th><th>Assistiu</th><th>No grupo</th><th>Último acesso</th></tr>${linhas||'<tr><td class="hint">ninguém assistiu ainda</td></tr>'}</table></div>
+    </div>`;
+  }).join("");
+  box.innerHTML = blocos + `<div class="hint">"Fora" = identificou-se com um WhatsApp que não está na lista do grupo (Sendflow). Membros do grupo = lista em tempo real da Sendflow. Ranking completo para postar: <code>python3 trilha-missoes/missao.py ranking --frente PRF</code>.</div>`;
 }
 
 /* ---- 2b · campanhas ---- */

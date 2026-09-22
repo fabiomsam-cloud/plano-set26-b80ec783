@@ -336,7 +336,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, sfMembros] = await Promise.all([
+    const [vendas, spend, funil, comprasWeb, formsBlindado, vendasUtm, leadsEc, bioLeads, bioMats, disparos, ecCadDisparo, ecGrupo, ecEntradas, sfMembros, trilha] = await Promise.all([
       // (1) Termômetro — faturas PAGAS de setembro, receita líquida (net_value), caixa por paid_at.
       // Traz também a flag de parcelamento (consertada no webhook em 08/09, com backfill) para
       // decompor o medido em vendas novas × recorrência — a SOMA continua única (sem contar em dobro).
@@ -434,6 +434,9 @@ Deno.serve(async (req: Request) => {
       //      (trigger trg_webhook_inbox_sendflow_membros em webhook_inbox; não depende do match com leads nem de rotina).
       //      Export CSV (resource=membros) fica só como carga manual de emergência.
       fetchAll((a, b) => db.from("sendflow_membros").select("frente, numero_norm, saiu, captured_at").order("frente").order("numero_norm").range(a, b)),
+      // (15) Trilha de Missões (Polícias AM + PRF) — engajamento nos vídeos de aquecimento do grupo (22/09).
+      //      Engajado = cumpriu ≥ 1 missão (75% assistido). Tolerante: erro aqui não derruba o painel.
+      db.rpc("fn_plano_trilha_missoes", { p_top: 20 }).then((r) => r.error ? { error: r.error.message } : r.data, (e) => ({ error: String(e) })),
     ]);
 
     // ---- Entradas nos grupos do Estude Comigo por lead (releases do Sendflow por frente)
@@ -710,6 +713,7 @@ Deno.serve(async (req: Request) => {
           return acc;
         }, {} as Record<string, number>),
       },
+      trilha,                  // Trilha de Missões: números por frente/missão + top engajados (fn_plano_trilha_missoes)
       bio,                     // leads do link da bio @deltafabiosilva (insumo Fase 2/3 Polícias/PRF)
     });
   } catch (e) {
