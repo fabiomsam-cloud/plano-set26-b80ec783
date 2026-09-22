@@ -1146,7 +1146,7 @@ function renderTrilha(){
   const n = v => (v||0).toLocaleString("pt-BR");
   const pct = (a,b) => b ? Math.round(a/b*100) + "%" : "—";
   const chip = (l,v,cor,sub) => `<div style="background:#f1f5f9;border-radius:10px;padding:8px 14px;min-width:104px"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em">${l}</div><div style="font-family:var(--disp);font-size:20px;font-weight:700;color:${cor||'var(--ink)'};margin-top:2px">${v}</div>${sub?`<div style="font-size:11px;color:var(--muted)">${sub}</div>`:""}</div>`;
-  const hm = s => { s = s||0; const h = Math.floor(s/3600), m = Math.round(s%3600/60); return h ? `${h}h${String(m).padStart(2,"0")}` : `${m} min`; };
+  const hm = s => { const t = Math.round((s||0)/60), h = Math.floor(t/60), m = t%60; return h ? `${h}h${String(m).padStart(2,"0")}` : `${m} min`; };
   const quando = iso => iso ? new Date(iso).toLocaleString("pt-BR",{timeZone:"America/Manaus",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
   const blocos = T.frentes.map(F => {
     const pills = [
